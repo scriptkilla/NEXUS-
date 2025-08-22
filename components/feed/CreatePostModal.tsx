@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { CRYPTO_CURRENCIES, MOCK_GAMES } from '../../constants';
 import type { Post, Game, TipGoal, User, EngagementRewards, CreatePostData } from '../../types';
@@ -150,6 +149,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) =>
       engagementRewards: engagementRewards || undefined,
     };
     createPost(postData);
+    onClose();
   };
 
   const hasAttachment = !!attachedImage || showPollCreator || !!attachedGame;

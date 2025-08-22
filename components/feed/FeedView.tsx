@@ -67,7 +67,7 @@ const FeedView: React.FC = () => {
         </div>
       </div>
       
-      <div className="max-w-3xl mx-auto w-full space-y-6 mt-6">
+      <div className="max-w-3xl mx-auto w-full space-y-6 mt-16">
         {displayedPosts.length > 0 ? (
           displayedPosts.map(post => <PostCard key={post.id} post={post} />)
         ) : (

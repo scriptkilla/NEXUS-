@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import type { View, Theme, Post, NotificationSettings, PrivacySettings, User, ApiProvider, ApiKeyTier, Wallet, Network, CryptoCurrency, Game, LiveStream, CreatePostData, Conversation, MiningState, LlmService, GameEngineIntegration } from './types';
-import { THEMES, TEXT_MODELS, IMAGE_VIDEO_MODELS, VOICE_AUDIO_MODELS, GAME_ENGINE_INTEGRATIONS, MOCK_GAMES, MOCK_LIVE_STREAMS, MOCK_CONVERSATIONS, MOCK_WALLETS, CRYPTO_CURRENCIES, MOCK_NETWORKS, API_PROVIDERS, MOCK_USERS } from './constants';
+import type { View, Theme, Post, NotificationSettings, PrivacySettings, User, ApiProvider, ApiKeyTier, Wallet, Network, CryptoCurrency, Game, LiveStream, CreatePostData, Conversation, MiningState, LlmService, GameEngineIntegration, DirectMessage } from './types';
+import { THEMES, TEXT_MODELS, IMAGE_VIDEO_MODELS, VOICE_AUDIO_MODELS, GAME_ENGINE_INTEGRATIONS, MOCK_GAMES, MOCK_LIVE_STREAMS, MOCK_CONVERSATIONS, MOCK_WALLETS, CRYPTO_CURRENCIES, MOCK_NETWORKS, API_PROVIDERS, MOCK_USERS, MOCK_POSTS } from './constants';
 import * as api from './api';
 import Layout from './components/layout/Layout';
 import FeedView from './components/feed/FeedView';
@@ -41,7 +41,7 @@ const App: React.FC = () => {
     // Data State (still mock for now)
     const [allUsers, setAllUsers] = useState<User[]>(Object.values(MOCK_USERS));
     const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
-    const [posts, setPosts] = useState<Post[]>([]);
+    const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
     const [wallets, setWallets] = useState<Wallet[]>(MOCK_WALLETS);
     const [activeWalletId, setActiveWalletId] = useState('w1');
     const [networks, setNetworks] = useState<Network[]>(MOCK_NETWORKS);
@@ -85,12 +85,13 @@ const App: React.FC = () => {
 
         if (!userExists) {
             // New user from sign-up
-            setAllUsers(prevUsers => [...prevUsers, user]);
+            const newUser = { ...user, id: `u${allUsers.length + 1}`};
+            setAllUsers(prevUsers => [...prevUsers, newUser]);
             
             const newWallet: Wallet = {
-                id: `w_${user.username.toLowerCase()}`,
+                id: `w${allUsers.length + 1}`,
                 name: `${user.name}'s Wallet`,
-                userId: user.id,
+                userId: newUser.id,
                 address: `NEXUS-addr-${user.username.toLowerCase()}-${Date.now().toString().slice(-4)}`,
                 balances: { 'NXG': 1000 }, // Welcome bonus
                 seedPhrase: `welcome to nexus ${user.username} this is a mock seed phrase for demo`,
@@ -98,15 +99,16 @@ const App: React.FC = () => {
             
             setWallets(prevWallets => [...prevWallets, newWallet]);
             setActiveWalletId(newWallet.id);
+            setCurrentUserState(newUser);
         } else {
              // Existing user from login, find their wallet
-             const userWallet = wallets.find(w => w.userId === user.id);
+             const userWallet = MOCK_WALLETS.find(w => w.userId === user.id);
              if (userWallet) {
                 setActiveWalletId(userWallet.id);
              }
+             setCurrentUserState(user);
         }
 
-        setCurrentUserState(user);
         setDataLoaded(true);
     };
 
@@ -120,7 +122,9 @@ const App: React.FC = () => {
     const setCurrentUser = useCallback(async (updates: Partial<User>) => {
       // Mock user update
       if(currentUser) {
-        setCurrentUserState(prev => prev ? {...prev, ...updates} : null);
+        const updatedUser = { ...currentUser, ...updates };
+        setCurrentUserState(updatedUser);
+        setAllUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
       }
     }, [currentUser]);
 
@@ -161,11 +165,32 @@ const App: React.FC = () => {
     }, []);
     
     const createPost = useCallback(async (postData: CreatePostData) => {
-      // Mock create post
-    }, []);
+      if (!currentUser) return;
+      
+      if (postData.engagementRewards) {
+          const budget = postData.engagementRewards.totalBudget;
+          setWallets(prev => prev.map(w => {
+              if (w.id === activeWalletId) {
+                  return { ...w, balances: { ...w.balances, 'NXG': w.balances['NXG'] - budget } };
+              }
+              return w;
+          }));
+      }
+
+      const newPost: Post = {
+        id: `p${Date.now()}`,
+        author: currentUser,
+        timestamp: 'Just now',
+        likes: 0,
+        reposts: 0,
+        comments: [],
+        ...postData,
+      };
+      setPosts(prevPosts => [newPost, ...prevPosts]);
+    }, [currentUser, activeWalletId]);
   
     const updatePost = useCallback(async (postId: string, updates: Partial<Post>) => {
-      // Mock update post
+      setPosts(prev => prev.map(p => p.id === postId ? {...p, ...updates} : p));
     }, []);
     
     const viewPost = useCallback((post: Post | null) => {
@@ -173,23 +198,65 @@ const App: React.FC = () => {
     }, []);
   
     const addNxg = useCallback(async (amount: number) => {
-      // Mock add NXG
-    }, []);
+      if (!activeWalletId) return;
+      setWallets(prev => prev.map(w => {
+        if (w.id === activeWalletId) {
+          return { ...w, balances: { ...w.balances, 'NXG': (w.balances['NXG'] || 0) + amount } };
+        }
+        return w;
+      }));
+    }, [activeWalletId]);
     
     const addWallet = useCallback(async (name: string) => {
-      // Mock add wallet
-    }, []);
+      if (!currentUser) return;
+      const newWallet: Wallet = {
+        id: `w_${name.toLowerCase().replace(' ', '_')}_${Date.now()}`,
+        name: name,
+        userId: currentUser.id,
+        address: `NEXUS-addr-custom-${Date.now().toString().slice(-6)}`,
+        balances: { 'NXG': 0 },
+        seedPhrase: `mock seed for new wallet named ${name}`,
+      };
+      setWallets(prev => [...prev, newWallet]);
+      setActiveWalletId(newWallet.id);
+    }, [currentUser]);
   
     const sendCrypto = useCallback(async (symbol: string, amount: number) => {
-      // Mock send crypto
-    }, []);
+      if (!activeWalletId) return;
+      setWallets(prev => prev.map(w => {
+          if (w.id === activeWalletId) {
+              const currentBalance = w.balances[symbol] || 0;
+              return { ...w, balances: { ...w.balances, [symbol]: currentBalance - amount } };
+          }
+          return w;
+      }));
+    }, [activeWalletId]);
   
     const swapCrypto = useCallback(async (fromSymbol: string, toSymbol: string, fromAmount: number, toAmount: number) => {
-      // Mock swap crypto
-    }, []);
+      if (!activeWalletId) return;
+      setWallets(prev => prev.map(w => {
+          if (w.id === activeWalletId) {
+              const fromBalance = w.balances[fromSymbol] || 0;
+              const toBalance = w.balances[toSymbol] || 0;
+              return { 
+                  ...w, 
+                  balances: { 
+                      ...w.balances, 
+                      [fromSymbol]: fromBalance - fromAmount,
+                      [toSymbol]: toBalance + toAmount
+                  } 
+              };
+          }
+          return w;
+      }));
+    }, [activeWalletId]);
   
     const addNetwork = useCallback(async (network: Omit<Network, 'id'>) => {
-      // Mock add network
+      const newNetwork: Network = {
+        ...network,
+        id: `net_${network.name.toLowerCase().replace(' ', '_')}_${Date.now()}`
+      };
+      setNetworks(prev => [...prev, newNetwork]);
     }, []);
   
     const addCustomCoin = useCallback(async (coinData: Omit<CryptoCurrency, 'id' | 'icon' | 'gradient'>) => {
@@ -247,7 +314,15 @@ const App: React.FC = () => {
     }, [activeWalletId, knownCurrencies]);
   
     const updateApiTier = useCallback(async (providerId: string, tierId: string, updates: Partial<ApiKeyTier>) => {
-      // Mock update api tier
+      setApiProviders(prev => prev.map(p => {
+        if (p.id === providerId) {
+          return {
+            ...p,
+            tiers: p.tiers.map(t => t.id === tierId ? { ...t, ...updates } : t)
+          };
+        }
+        return p;
+      }));
     }, []);
     
     const updateLlmService = useCallback((modelId: string, category: 'text' | 'image' | 'voice', updates: Partial<LlmService>) => {
@@ -269,12 +344,33 @@ const App: React.FC = () => {
     }, []);
   
     const playGame = useCallback(async (game: Game) => {
-      // Mock play game
-    }, []);
+      const creator = allUsers.find(u => u.id === game.creatorId);
+      if (creator) {
+        // Mock tipping the creator a small amount for playing
+        const creatorWallet = wallets.find(w => w.userId === creator.id);
+        if (creatorWallet) {
+          setWallets(prev => prev.map(w => {
+            if (w.id === creatorWallet.id) {
+              return { ...w, balances: { ...w.balances, 'NXG': (w.balances['NXG'] || 0) + 0.01 } };
+            }
+            return w;
+          }));
+        }
+      }
+    }, [allUsers, wallets]);
   
     const publishGame = useCallback(async (newGameData: Omit<Game, 'id' | 'creatorId' | 'playCount'>) => {
-      // Mock publish game
-    }, []);
+      if (!currentUser) return;
+      const newGame: Game = {
+        ...newGameData,
+        id: `g${games.length + 1}`,
+        creatorId: currentUser.id,
+        playCount: 0,
+      };
+      setGames(prev => [newGame, ...prev]);
+      setCurrentUser({ createdGames: [...(currentUser.createdGames || []), newGame]});
+      setView('gaming');
+    }, [currentUser, games.length, setView, setCurrentUser]);
   
     const viewStream = useCallback((stream: LiveStream) => {
         setSelectedStream(stream);
@@ -282,11 +378,25 @@ const App: React.FC = () => {
     }, []);
   
     const goLive = useCallback(async (title: string, gameId?: string) => {
-      // Mock go live
-    }, []);
+      if (!currentUser) return;
+      const game = gameId ? games.find(g => g.id === gameId) : undefined;
+      const newStream: LiveStream = {
+        id: `ls${Date.now()}`,
+        title,
+        game,
+        creator: currentUser,
+        viewerCount: 1,
+        thumbnail: game?.thumbnail || `https://picsum.photos/seed/live${Date.now()}/600/400`,
+      };
+      setLiveStreams(prev => [newStream, ...prev]);
+      viewStream(newStream);
+    }, [currentUser, games, viewStream]);
     
     const selectConversation = useCallback((conversationId: string | null) => {
         setSelectedConversationId(conversationId);
+        if(conversationId) {
+            setConversations(prev => prev.map(c => c.id === conversationId ? {...c, unreadCount: 0} : c))
+        }
     }, []);
   
     const sendMessage = useCallback(async (
@@ -294,8 +404,29 @@ const App: React.FC = () => {
       content: string,
       attachment?: { type: 'image', url: string } | { type: 'game', gameId: string }
     ) => {
-      // Mock send message
-    }, []);
+        if (!currentUser) return;
+        setConversations(prev => prev.map(c => {
+            if (c.id === conversationId) {
+                const newMessageBase = {
+                    id: `m${Date.now()}`,
+                    senderId: currentUser.id,
+                    content,
+                    timestamp: 'Just now',
+                };
+                let newMessage: DirectMessage;
+                if (attachment?.type === 'image') {
+                    newMessage = { ...newMessageBase, type: 'image', attachmentUrl: attachment.url };
+                } else if (attachment?.type === 'game') {
+                    newMessage = { ...newMessageBase, type: 'game', attachedGameId: attachment.gameId };
+                } else {
+                    newMessage = { ...newMessageBase, type: 'text' };
+                }
+
+                return { ...c, messages: [...c.messages, newMessage] };
+            }
+            return c;
+        }));
+    }, [currentUser]);
 
     // Mining Logic
     const addMiningLog = useCallback((message: string) => {
@@ -306,12 +437,36 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        // Mock mining state effect
-    }, [currentUser, addMiningLog]);
+        let timer: NodeJS.Timeout;
+        if (miningEndTime && miningEndTime > Date.now()) {
+            timer = setInterval(() => {
+                const newTimeLeft = miningEndTime - Date.now();
+                if (newTimeLeft <= 0) {
+                    setMiningState(prev => ({ ...prev, isMining: false, timeLeft: 0 }));
+                    addMiningLog("Mining session ended.");
+                    setMiningEndTime(null);
+                    clearInterval(timer);
+                } else {
+                    setMiningState(prev => ({ ...prev, timeLeft: newTimeLeft }));
+                }
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [miningEndTime, addMiningLog]);
 
     const startMining = useCallback(() => {
-        // Mock start mining
-    }, []);
+        if (miningState.isMining) return;
+        const endTime = Date.now() + 24 * 60 * 60 * 1000;
+        setMiningEndTime(endTime);
+        setMiningState(prev => ({
+            ...prev,
+            isMining: true,
+            timeLeft: 24 * 60 * 60 * 1000,
+            sessionStats: { earnings: 0, blocksFound: 0 },
+            hashRate: (Math.random() * 5 + 10) * (currentUser?.miningBoost || 1), // 10-15 KH/s base + boost
+        }));
+        addMiningLog("Mining session started. Good luck!");
+    }, [currentUser, addMiningLog, miningState.isMining]);
   
     // Context Value
     const contextValue = useMemo(() => ({
