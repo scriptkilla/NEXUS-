@@ -4,7 +4,8 @@ import React, { useState, useContext } from 'react';
 import Card from '../ui/Card';
 import { GAME_SIZES, GAME_DIFFICULTIES, GAME_GENRES, AI_OPTIONS, GAME_SIZE_COSTS } from '../../constants';
 import { SparklesIcon, GamepadIcon, LightbulbIcon, WrenchIcon, PackageIcon } from '../icons/Icons';
-import { GoogleGenAI, Type } from "@google/genai";
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../../firebase';
 import { type ClickerGameConfig, GameSize, GameDifficulty, AppContextType } from '../../types';
 import { AppContext } from '../context/AppContext';
 import ClickerGame from './ClickerGame';
@@ -126,68 +127,14 @@ Act as an expert game designer tasked with creating a simplified, web-based clic
 Now, generate the JSON configuration based on the user's idea provided above.
 `;
 
-    const schema = {
-      type: Type.OBJECT,
-      properties: {
-        title: {
-          type: Type.STRING,
-          description: "A creative and fitting title for the clicker game based on the user's prompt."
-        },
-        description: {
-            type: Type.STRING,
-            description: "A short, one-sentence description for the game."
-        },
-        itemName: {
-          type: Type.STRING,
-          description: "The name of the item the player clicks to earn points (e.g., 'Cookie', 'Gold Coin'). Should be singular."
-        },
-        itemEmoji: {
-            type: Type.STRING,
-            description: "A single emoji character that represents the clickable item."
-        },
-        pointsPerClick: {
-          type: Type.INTEGER,
-          description: "The number of points earned per click. Start with 1."
-        },
-        upgrades: {
-          type: Type.ARRAY,
-          description: "An array of 4 thematically appropriate upgrades the player can buy. Costs should be incremental and make sense for a starter game (e.g., 15, 100, 500, 2000).",
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              name: {
-                type: Type.STRING,
-                description: "The name of the upgrade."
-              },
-              cost: {
-                type: Type.INTEGER,
-                description: "The initial cost of the upgrade."
-              },
-              pointsPerSecond: {
-                type: Type.INTEGER,
-                description: "The number of points this upgrade generates per second."
-              }
-            }
-          }
-        }
-      }
-    };
-
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: schema,
-        },
-      });
-      const config = JSON.parse(response.text) as ClickerGameConfig;
+      const generateGameCallable = httpsCallable<{ prompt: string }, ClickerGameConfig>(functions, 'generateGame');
+      const result = await generateGameCallable({ prompt });
+      const config = result.data;
       setGeneratedGameConfig(config);
     } catch (err) {
-      console.error('AI game generation failed:', err);
-      setError('Failed to generate game. This could be due to an invalid API key, network issues, or a problem with the AI service. Please check your prompt and API key. See developer console for details.');
+      console.error('AI game generation via function failed:', err);
+      setError('Failed to generate game via cloud function. This could be due to a backend error. Please check the function logs. See developer console for details.');
     } finally {
       setIsLoading(false);
     }

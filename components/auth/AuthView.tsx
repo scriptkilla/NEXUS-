@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { NexusLogoIcon } from '../icons/Icons';
-import * as api from '../../api';
-import type { User } from '../../types';
+import { auth } from '../../firebase'; // Import the auth instance
 
 interface AuthViewProps {
-  onAuthSuccess: (user: User) => void;
+  // onAuthSuccess is no longer needed as App.tsx will listen to auth state changes
 }
 
-const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
+const AuthView: React.FC<AuthViewProps> = () => {
   const [isLoginView, setIsLoginView] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,10 +21,11 @@ const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
     setIsLoading(true);
     setError('');
     try {
-      const user = await api.login(email, password);
-      onAuthSuccess(user);
+      await signInWithEmailAndPassword(auth, email, password);
+      // onAuthSuccess will be triggered by onAuthStateChanged in App.tsx
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -34,10 +35,19 @@ const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
     setIsLoading(true);
     setError('');
     try {
-      const user = await api.signup({ name, username, email, password });
-      onAuthSuccess(user);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // After creating the user, update their profile with name/username
+      // Also, create a corresponding user document in Firestore.
+      if (userCredential.user) {
+        await updateProfile(userCredential.user, {
+          displayName: name,
+        });
+        // TODO: Create user document in Firestore here with username, etc.
+      }
+      // onAuthSuccess will be triggered by onAuthStateChanged in App.tsx
     } catch (err: any) {
       setError(err.message || 'Sign up failed. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };
