@@ -1,0 +1,9 @@
+{
+  "name": "NEXUS - Next-Generation Social Media Platform",
+  "description": "NEXUS is a revolutionary social media platform that seamlessly integrates cryptocurrency rewards, AI-powered game creation, and blockchain technology into one unified ecosystem.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "prompt": ""
+}
