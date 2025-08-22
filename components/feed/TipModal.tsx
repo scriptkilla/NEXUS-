@@ -1,4 +1,5 @@
 
+
 import React, { useState, useContext, useEffect } from 'react';
 import type { CryptoCurrency, User } from '../../types';
 import Modal from '../ui/Modal';
@@ -15,14 +16,16 @@ interface TipModalProps {
 const getMockUsdPrice = (symbol: string): number => {
     switch (symbol.toLowerCase()) {
         case 'nxg': return 1;
-        case 'btc': return 60000;
-        case 'eth': return 3000;
+        case 'btc': return 65000;
+        case 'eth': return 3500;
         case 'sol': return 150;
         case 'usdc': return 1;
-        case 'egld': return 45;
-        case 'ltc': return 100;
-        case 'trx': return 0.06;
-        default: return 1;
+        case 'matic': return 0.57;
+        case 'ada': return 0.45;
+        case 'xrp': return 0.48;
+        case 'doge': return 0.12;
+        case 'avax': return 25;
+        default: return 0.01;
     }
 };
 

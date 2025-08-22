@@ -3,7 +3,8 @@
 import React from 'react';
 import { type Post, type CryptoCurrency, type Theme, GameSize, GameDifficulty, type AIModel, type ApiProvider, type View, type Game, type User, type Transaction, type Wallet, type Network, type Achievement, type LiveStream, type Conversation, type LlmService, type GameEngineIntegration } from './types';
 import {
-  HomeIcon, GamepadIcon, WrenchIcon, WalletIcon, KeyIcon, UserIcon, NexusIcon, BtcIcon, SolIcon, EgldIcon, LtcIcon, TrxIcon, OpenAIIcon, ClaudeIcon, GeminiIcon, EthIcon, UsdcIcon, SparklesIcon, RadioIcon, MessageSquareIcon, MetaIcon, MistralIcon, CohereIcon, PerplexityIcon, StabilityIcon, MidjourneyIcon, RunwayIcon, ElevenLabsIcon, SunoIcon, UnityIcon, UnrealIcon, GodotIcon, RobloxIcon, GameMakerIcon, RpgMakerIcon, LumberyardIcon,
+  HomeIcon, GamepadIcon, WrenchIcon, WalletIcon, KeyIcon, UserIcon, NexusIcon, BtcIcon, SolIcon, OpenAIIcon, ClaudeIcon, GeminiIcon, EthIcon, UsdcIcon, SparklesIcon, RadioIcon, MessageSquareIcon, MetaIcon, MistralIcon, CohereIcon, PerplexityIcon, StabilityIcon, MidjourneyIcon, RunwayIcon, ElevenLabsIcon, SunoIcon, UnityIcon, UnrealIcon, GodotIcon, RobloxIcon, GameMakerIcon, RpgMakerIcon, LumberyardIcon,
+  MaticIcon, AdaIcon, XrpIcon, DogeIcon, AvaxIcon
 } from './components/icons/Icons';
 
 export const SIDEBAR_LINKS: { name: string; icon: React.ReactNode; view: View }[] = [
@@ -21,17 +22,24 @@ export const MOCK_NETWORKS: Network[] = [
   { id: 'net1', name: 'Ethereum Mainnet', rpcUrl: 'https://mainnet.infura.io/v3/YOUR_PROJECT_ID', chainId: 1, currencySymbol: 'ETH', explorerUrl: 'https://etherscan.io' },
   { id: 'net2', name: 'Polygon', rpcUrl: 'https://polygon-rpc.com', chainId: 137, currencySymbol: 'MATIC', explorerUrl: 'https://polygonscan.com' },
   { id: 'solana-mainnet', name: 'Solana Mainnet', rpcUrl: 'https://api.mainnet-beta.solana.com', chainId: 101, currencySymbol: 'SOL', explorerUrl: 'https://explorer.solana.com' },
+  { id: 'bitcoin-mainnet', name: 'Bitcoin Mainnet', rpcUrl: 'https://blockchain.info/rpc', chainId: 0, currencySymbol: 'BTC', explorerUrl: 'https://www.blockchain.com/explorer' },
+  { id: 'cardano-mainnet', name: 'Cardano Mainnet', rpcUrl: 'https://cardano-mainnet.blockfrost.io/api/v0', chainId: 1, currencySymbol: 'ADA', explorerUrl: 'https://cardanoscan.io' },
+  { id: 'ripple-mainnet', name: 'Ripple Ledger', rpcUrl: 'https://s1.ripple.com:51234/', chainId: 0, currencySymbol: 'XRP', explorerUrl: 'https://xrpscan.com' },
+  { id: 'dogecoin-mainnet', name: 'Dogecoin Mainnet', rpcUrl: 'https://doge.nownodes.io', chainId: 0, currencySymbol: 'DOGE', explorerUrl: 'https://dogechain.info' },
+  { id: 'avalanche-c-chain', name: 'Avalanche C-Chain', rpcUrl: 'https://api.avax.network/ext/bc/C/rpc', chainId: 43114, currencySymbol: 'AVAX', explorerUrl: 'https://snowtrace.io' },
 ];
 
 export const CRYPTO_CURRENCIES: CryptoCurrency[] = [
   { id: 'nxg', name: 'NEXUS', symbol: 'NXG', icon: NexusIcon, gradient: 'from-pink-500 to-purple-600', networkId: 'solana-mainnet' },
-  { id: 'eth', name: 'Ethereum', symbol: 'ETH', icon: EthIcon, gradient: 'from-gray-500 to-gray-700', networkId: 'net1' },
-  { id: 'usdc', name: 'USD Coin', symbol: 'USDC', icon: UsdcIcon, gradient: 'from-blue-400 to-sky-500', networkId: 'net1', contractAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' },
   { id: 'btc', name: 'Bitcoin', symbol: 'BTC', icon: BtcIcon, gradient: 'from-orange-400 to-yellow-500', networkId: 'bitcoin-mainnet' },
+  { id: 'eth', name: 'Ethereum', symbol: 'ETH', icon: EthIcon, gradient: 'from-gray-500 to-gray-700', networkId: 'net1' },
   { id: 'sol', name: 'Solana', symbol: 'SOL', icon: SolIcon, gradient: 'from-purple-500 to-blue-400', networkId: 'solana-mainnet' },
-  { id: 'egld', name: 'MultiversX', symbol: 'EGLD', icon: EgldIcon, gradient: 'from-blue-400 to-cyan-300', networkId: 'multiversx-mainnet' },
-  { id: 'ltc', name: 'Litecoin', symbol: 'LTC', icon: LtcIcon, gradient: 'from-gray-400 to-gray-600', networkId: 'litecoin-mainnet' },
-  { id: 'trx', name: 'TRON', symbol: 'TRX', icon: TrxIcon, gradient: 'from-red-500 to-pink-500', networkId: 'tron-mainnet' },
+  { id: 'usdc', name: 'USD Coin', symbol: 'USDC', icon: UsdcIcon, gradient: 'from-blue-400 to-sky-500', networkId: 'net1', contractAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' },
+  { id: 'matic', name: 'Polygon', symbol: 'MATIC', icon: MaticIcon, gradient: 'from-purple-400 to-indigo-500', networkId: 'net2' },
+  { id: 'ada', name: 'Cardano', symbol: 'ADA', icon: AdaIcon, gradient: 'from-blue-500 to-cyan-400', networkId: 'cardano-mainnet' },
+  { id: 'xrp', name: 'Ripple', symbol: 'XRP', icon: XrpIcon, gradient: 'from-gray-700 to-gray-900', networkId: 'ripple-mainnet' },
+  { id: 'doge', name: 'Dogecoin', symbol: 'DOGE', icon: DogeIcon, gradient: 'from-yellow-400 to-amber-500', networkId: 'dogecoin-mainnet' },
+  { id: 'avax', name: 'Avalanche', symbol: 'AVAX', icon: AvaxIcon, gradient: 'from-red-500 to-rose-500', networkId: 'avalanche-c-chain' },
 ];
 
 export const MOCK_WALLETS: Wallet[] = [
@@ -39,16 +47,18 @@ export const MOCK_WALLETS: Wallet[] = [
     id: 'w1',
     name: 'Main Wallet',
     userId: 'u1',
-    address: 'Gf7dG2x2q4qA9yB8c6D5e4F3g2H1j0kL9m8N7p6Q5rS',
+    address: '8iP1yWkLpT7zJ7qZ9f8c6D5e4F3g2H1j0kL9m8N7p6Q',
     balances: {
       'NXG': 1000,
+      'SOL': 15.8,
       'ETH': 1.5,
       'USDC': 3500.50,
       'BTC': 0.05,
-      'SOL': 15.8,
-      'EGLD': 250.1,
-      'LTC': 30.5,
-      'TRX': 10000,
+      'MATIC': 500,
+      'ADA': 1250,
+      'XRP': 2500,
+      'DOGE': 50000,
+      'AVAX': 50,
     },
     seedPhrase: 'galaxy luxury turtle syrup onion chorus screen jungle floor sister tribe leader'
   },
@@ -56,15 +66,15 @@ export const MOCK_WALLETS: Wallet[] = [
     id: 'w2',
     name: 'Trading Vault',
     userId: 'u1',
-    address: '4BoqV6a1qZ9X8c7v6B5n4M3l2K1j0hGf9e8d7C6b5A4s',
+    address: 'D4fKvy5l643lydnw9re59gtzzwf5mdqj7qZ9f8c6D5',
     balances: {
       'NXG': 1000,
       'ETH': 10,
       'USDC': 150000,
       'BTC': 1.2,
       'SOL': 1000,
-      'LTC': 150,
-      'TRX': 250000,
+      'MATIC': 25000,
+      'AVAX': 1000,
     },
     seedPhrase: 'rapid wolf kiwi praise peanut hazard market quantum fabric valve foam absorb'
   },
@@ -72,40 +82,40 @@ export const MOCK_WALLETS: Wallet[] = [
     id: 'w3',
     name: 'ByteFlow\'s Wallet',
     userId: 'u2',
-    address: 'Hq8rP9sX7yZ6w5v4u3t2s1R0qP9oN8m7L6k5J4h3G2f1',
-    balances: { 'NXG': 1000, 'ETH': 2, 'SOL': 10 },
+    address: 'ETh7zJ7qZ9f8c6D5e4F3g2H1j0kL9m8N7p6Q5rSj7qZ',
+    balances: { 'NXG': 1000, 'ETH': 2, 'SOL': 10, 'MATIC': 200 },
     seedPhrase: 'puzzle squirrel helmet garlic mouse drill festival sea early wonder high jump'
   },
   {
     id: 'w4',
     name: 'Cypher\'s Wallet',
     userId: 'u3',
-    address: 'Kj9hG8f7E6d5C4b3A2z1Y9x8W7v6U5t4S3r2Q1p0oN9m',
-    balances: { 'NXG': 1000, 'BTC': 0.1, 'EGLD': 50 },
+    address: 'BTcqr0srrr7xfkvy5l643lydnw9re59gtzzwf5mdqZ9f',
+    balances: { 'NXG': 1000, 'BTC': 0.1, 'ADA': 5000 },
     seedPhrase: 'lion dance human nothing govern budget draft episode answer label glove outside'
   },
   {
     id: 'w5',
     name: 'Zenith\'s Wallet',
     userId: 'u4',
-    address: 'Lm0nK1j2H3g4F5d6S7a8Z9y0X8c7V6b5N4m3L2k1J0h9',
-    balances: { 'NXG': 1000, 'USDC': 2500, 'TRX': 20000 },
+    address: 'ADAr0srrr7xfkvy5l643lydnw9re59gtzzwf5mdqA9b',
+    balances: { 'NXG': 1000, 'USDC': 2500, 'DOGE': 200000 },
     seedPhrase: 'victory paper box social embody list desk oven elbow grace shoulder find'
   },
   {
     id: 'w6',
     name: 'Echo\'s Wallet',
     userId: 'u5',
-    address: 'Bv1c2X3z4A5s6D7f8G9h0J9k8L7m6N5b4V3c2X1z0a9s',
-    balances: { 'NXG': 1000, 'LTC': 10 },
+    address: 'XRPdG2x2q4qA9yB8c6D5e4F3g2H1j0kL9m8N7p6Q5rS',
+    balances: { 'NXG': 1000, 'XRP': 10000 },
     seedPhrase: 'cause myth escape pretty tourist afford client wedding chaos rebuild task fine'
   },
   {
     id: 'w7',
     name: 'Shard\'s Wallet',
     userId: 'u6',
-    address: 'Po1i2U3y4T5r6E7w8Q9a0S8d7F6g5H4j3K2l1Z0x9c8v',
-    balances: { 'NXG': 1000 },
+    address: 'AVAX1yWkLpT7zJ7qZ9f8c6D5e4F3g2H1j0kL9m8N7p6',
+    balances: { 'NXG': 1000, 'AVAX': 25 },
     seedPhrase: 'ozone improve stay vibrant rural often track legal mushroom wild owner another'
   }
 ];
@@ -254,7 +264,7 @@ export const MOCK_POSTS: Post[] = [
   {
     id: 'p4',
     author: MOCK_USERS.zenith,
-    content: 'Big fan of the crypto tipping feature. Just sent some $EGLD to my favorite creator. So easy to support the community!',
+    content: 'Big fan of the crypto tipping feature. Just sent some $DOGE to my favorite creator. So easy to support the community!',
     timestamp: '2d ago',
     likes: 2048,
     reposts: 431,
@@ -265,14 +275,14 @@ export const MOCK_POSTS: Post[] = [
 ];
 
 export const MOCK_TRANSACTIONS: Transaction[] = [
-    { id: 't1', type: 'receive', status: 'completed', crypto: CRYPTO_CURRENCIES[1], amount: 0.005, usdValue: 300, address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', timestamp: '2 hours ago', date: '2024-07-20' },
-    { id: 't2', type: 'send', status: 'completed', crypto: CRYPTO_CURRENCIES[2], amount: 5.2, usdValue: 780, address: 'So11111111111111111111111111111111111111112', timestamp: '8 hours ago', date: '2024-07-20' },
+    { id: 't1', type: 'receive', status: 'completed', crypto: CRYPTO_CURRENCIES[2], amount: 0.5, usdValue: 1750, address: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e', timestamp: '2 hours ago', date: '2024-07-20' },
+    { id: 't2', type: 'send', status: 'completed', crypto: CRYPTO_CURRENCIES[3], amount: 10, usdValue: 1500, address: 'So11111111111111111111111111111111111111112', timestamp: '8 hours ago', date: '2024-07-20' },
     { id: 't3', type: 'swap', status: 'completed', crypto: CRYPTO_CURRENCIES[0], amount: 150.75, usdValue: 150.75, timestamp: '1 day ago', date: '2024-07-19' },
     { id: 't4', type: 'mine', status: 'completed', crypto: CRYPTO_CURRENCIES[0], amount: 0.8934, usdValue: 0.89, timestamp: '1 day ago', date: '2024-07-19' },
     { id: 't5', type: 'reward', status: 'completed', crypto: CRYPTO_CURRENCIES[0], amount: 10, usdValue: 10, timestamp: '2 days ago', date: '2024-07-18' },
-    { id: 't6', type: 'send', status: 'pending', crypto: CRYPTO_CURRENCIES[3], amount: 100, usdValue: 4500, address: 'erd1qqqqqqqqqqqqqpgq4c9flqg0t8d7qpd5h4q9x3j4h2y5j4h2y5j4h2y5j4h2y5j4h2', timestamp: '3 days ago', date: '2024-07-17' },
-    { id: 't7', type: 'receive', status: 'completed', crypto: CRYPTO_CURRENCIES[4], amount: 2.5, usdValue: 250, address: 'ltc1q8s6e5n2x5q4q3z2y7x9f8c6b5a4d3e2f1g0h9', timestamp: '4 days ago', date: '2024-07-16' },
-    { id: 't8', type: 'send', status: 'failed', crypto: CRYPTO_CURRENCIES[5], amount: 5000, usdValue: 300, address: 'TX7nCAbx32pCj2e4uBFEA4sS1A1a1a1a1a', timestamp: '5 days ago', date: '2024-07-15' },
+    { id: 't6', type: 'send', status: 'pending', crypto: CRYPTO_CURRENCIES[1], amount: 0.075, usdValue: 4500, address: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq', timestamp: '3 days ago', date: '2024-07-17' },
+    { id: 't7', type: 'receive', status: 'completed', crypto: CRYPTO_CURRENCIES[6], amount: 1000, usdValue: 450, address: 'addr1q8jlc7s6f02q9w8q8z4t7g8y8n5w8q8q8z4t7g8y8n5w8q8q8z4t7g8y8n5w8q8q8z4t7g', timestamp: '4 days ago', date: '2024-07-16' },
+    { id: 't8', type: 'send', status: 'failed', crypto: CRYPTO_CURRENCIES[8], amount: 5000, usdValue: 600, address: 'D7y1DbwV7vFzC5f8c6D5e4F3g2H1j0kL9m8N7', timestamp: '5 days ago', date: '2024-07-15' },
     { id: 't9', type: 'mine', status: 'completed', crypto: CRYPTO_CURRENCIES[0], amount: 1.2345, usdValue: 1.23, timestamp: '5 days ago', date: '2024-07-15' },
 ];
 

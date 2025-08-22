@@ -258,11 +258,13 @@ export const NexusIcon = ({ className = 'w-8 h-8' }: { className?: string }) => 
 );
 export const BtcIcon = ({ className = 'w-6 h-6' }: { className?: string }) => <div className={`text-orange-500 font-bold ${className}`}>₿</div>;
 export const SolIcon = ({ className = 'w-6 h-6' }: { className?: string }) => <div className={`text-purple-500 font-bold ${className}`}>S</div>;
-export const EgldIcon = ({ className = 'w-6 h-6' }: { className?: string }) => <div className={`text-cyan-400 font-bold ${className}`}>E</div>;
-export const LtcIcon = ({ className = 'w-6 h-6' }: { className?: string }) => <div className={`text-gray-400 font-bold ${className}`}>Ł</div>;
-export const TrxIcon = ({ className = 'w-6 h-6' }: { className?: string }) => <div className={`text-red-600 font-bold ${className}`}>T</div>;
 export const EthIcon = ({ className = 'w-6 h-6 flex items-center justify-center text-gray-400' }: { className?: string }) => <span className={className}>Ξ</span>;
 export const UsdcIcon = ({ className = 'w-6 h-6 flex items-center justify-center text-blue-500 font-bold' }: { className?: string }) => <span className={className}>$</span>;
+export const MaticIcon = ({ className = 'w-6 h-6 flex items-center justify-center text-purple-500 font-bold' }: { className?: string }) => <span className={className}>M</span>;
+export const AdaIcon = ({ className = 'w-6 h-6 flex items-center justify-center text-blue-600 font-bold' }: { className?: string }) => <span className={className}>A</span>;
+export const XrpIcon = ({ className = 'w-6 h-6 flex items-center justify-center text-blue-900 font-bold' }: { className?: string }) => <span className={className}>X</span>;
+export const DogeIcon = ({ className = 'w-6 h-6 flex items-center justify-center text-yellow-500 font-bold' }: { className?: string }) => <span className={className}>Ð</span>;
+export const AvaxIcon = ({ className = 'w-6 h-6 flex items-center justify-center text-red-600 font-bold' }: { className?: string }) => <span className={className}>A</span>;
 
 export const OpenAIIcon = ({ className = 'w-6 h-6' }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M22.2819 13.3333V10.6667H18.6666V9.28189C18.6666 8.52381 18.0428 7.90002 17.2847 7.90002C16.5266 7.90002 15.9028 8.52381 15.9028 9.28189V13.3333H22.2819ZM12.0001 7.90002C12.7581 7.90002 13.3819 7.27623 13.3819 6.51815C13.3819 5.76008 12.7581 5.13629 12.0001 5.13629C11.242 5.13629 10.6182 5.76008 10.6182 6.51815C10.6182 7.27623 11.242 7.90002 12.0001 7.90002ZM5.33331 10.6667H1.71806V13.3333H5.33331V14.7181C5.33331 15.4762 5.95711 16.1 6.71518 16.1C7.47326 16.1 8.09705 15.4762 8.09705 14.7181V10.6667H5.33331ZM12.0001 18.8637C11.242 18.8637 10.6182 18.2399 10.6182 17.4818C10.6182 16.7238 11.242 16.1 12.0001 16.1C12.7581 16.1 13.3819 16.7238 13.3819 17.4818C13.3819 18.2399 12.7581 18.8637 12.0001 18.8637ZM17.2847 16.1C18.0428 16.1 18.6666 15.4762 18.6666 14.7181V12.051H15.9028V14.7181C15.9028 15.4762 16.5266 16.1 17.2847 16.1ZM8.09705 9.28189C8.09705 8.52381 7.47326 7.90002 6.71518 7.90002C5.95711 7.90002 5.33331 8.52381 5.33331 9.28189V12.051H8.09705V9.28189Z" /></svg>
