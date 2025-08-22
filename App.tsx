@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import type { View, Theme, Post, NotificationSettings, PrivacySettings, User, ApiProvider, ApiKeyTier, Wallet, Network, CryptoCurrency, Game, LiveStream, CreatePostData, Conversation, MiningState, LlmService, GameEngineIntegration } from './types';
 import { THEMES, TEXT_MODELS, IMAGE_VIDEO_MODELS, VOICE_AUDIO_MODELS, GAME_ENGINE_INTEGRATIONS, MOCK_GAMES, MOCK_LIVE_STREAMS, MOCK_CONVERSATIONS, MOCK_WALLETS, CRYPTO_CURRENCIES, MOCK_NETWORKS, API_PROVIDERS, MOCK_USERS } from './constants';
 import * as api from './api';
@@ -23,12 +22,9 @@ import { AppContext } from './components/context/AppContext';
 import AuthView from './components/auth/AuthView';
 import Spinner from './components/ui/Spinner';
 import AssetStoreView from './components/studio/AssetStoreView';
-import { auth } from './firebase'; // Import Firebase auth instance
 
 const App: React.FC = () => {
     // Auth State
-    const [authLoaded, setAuthLoaded] = useState(false);
-    const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
     const [currentUser, setCurrentUserState] = useState<User | null>(null);
     const [dataLoaded, setDataLoaded] = useState(false);
     
@@ -83,39 +79,35 @@ const App: React.FC = () => {
     const selectedProfile = useMemo(() => allUsers.find(u => u.id === selectedProfileId) || null, [allUsers, selectedProfileId]);
     const selectedConversation = useMemo(() => conversations.find(c => c.id === selectedConversationId), [conversations, selectedConversationId]);
 
-    // Auth and Data Loading
-    useEffect(() => {
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        setFirebaseUser(user);
-        if (user) {
-          // TODO: Fetch user profile from Firestore based on user.uid
-          // For now, we'll find a mock user by email as a placeholder
-          // In a real app, the Firestore doc ID would be user.uid
-          const mockUser = MOCK_USERS[Object.keys(MOCK_USERS)[0]]; // Just get first mock user
-          setCurrentUserState(mockUser);
-          setDataLoaded(true); // Placeholder for real data loading
-        } else {
-          setCurrentUserState(null);
-          setDataLoaded(false);
-        }
-        setAuthLoaded(true);
-      });
-      return () => unsubscribe();
-    }, []);
+    const handleAuthSuccess = (user: User) => {
+        setCurrentUserState(user);
+        setDataLoaded(true); // Since we use mock data, we can load instantly
+    };
 
     const handleLogout = () => {
-        auth.signOut();
+        setCurrentUserState(null);
+        setDataLoaded(false);
         setView('feed');
     };
 
-    // Callback Handlers (will be refactored to use Firebase)
+    // Callback Handlers (can be populated with API calls later)
     const setCurrentUser = useCallback(async (updates: Partial<User>) => {
-      // TODO: Update user doc in Firestore
-    }, []);
+      // Mock user update
+      if(currentUser) {
+        setCurrentUserState(prev => prev ? {...prev, ...updates} : null);
+      }
+    }, [currentUser]);
 
     const toggleFollow = useCallback(async (userId: string) => {
-      // TODO: Update user doc in Firestore
-    }, []);
+      // Mock follow toggle
+      if(currentUser) {
+          const isFollowing = currentUser.following.includes(userId);
+          const newFollowing = isFollowing 
+            ? currentUser.following.filter(id => id !== userId)
+            : [...currentUser.following, userId];
+          setCurrentUser({ following: newFollowing });
+      }
+    }, [currentUser, setCurrentUser]);
     
     const viewProfile = useCallback((user: User) => {
         setSelectedProfileId(user.id);
@@ -128,23 +120,26 @@ const App: React.FC = () => {
     }, []);
 
     const blockUser = useCallback(async (userId: string) => {
-      // TODO: Update user doc in Firestore
-    }, []);
+      // Mock block user
+      setCurrentUser({ blockedUsers: [...(currentUser?.blockedUsers || []), userId] });
+    }, [currentUser, setCurrentUser]);
     
     const unblockUser = useCallback(async (userId: string) => {
-      // TODO: Update user doc in Firestore
-    }, []);
+      // Mock unblock user
+      setCurrentUser({ blockedUsers: (currentUser?.blockedUsers || []).filter(id => id !== userId) });
+    }, [currentUser, setCurrentUser]);
   
     const reportUser = useCallback(async (userId: string, reason: string, details: string) => {
-      // TODO: Add report to a 'reports' collection in Firestore
+      console.log('Reporting user:', { userId, reason, details });
+      alert('User reported successfully (mocked).');
     }, []);
     
     const createPost = useCallback(async (postData: CreatePostData) => {
-      // TODO: Add new post doc to Firestore
+      // Mock create post
     }, []);
   
     const updatePost = useCallback(async (postId: string, updates: Partial<Post>) => {
-      // TODO: Update post doc in Firestore
+      // Mock update post
     }, []);
     
     const viewPost = useCallback((post: Post | null) => {
@@ -152,35 +147,35 @@ const App: React.FC = () => {
     }, []);
   
     const addNxg = useCallback(async (amount: number) => {
-      // TODO: Update wallet doc in Firestore
+      // Mock add NXG
     }, []);
     
     const addWallet = useCallback(async (name: string) => {
-      // TODO: Add wallet doc in Firestore
+      // Mock add wallet
     }, []);
   
     const sendCrypto = useCallback(async (symbol: string, amount: number) => {
-      // TODO: Update wallet doc and create transaction in Firestore
+      // Mock send crypto
     }, []);
   
     const swapCrypto = useCallback(async (fromSymbol: string, toSymbol: string, fromAmount: number, toAmount: number) => {
-      // TODO: Update wallet doc and create transaction in Firestore
+      // Mock swap crypto
     }, []);
   
     const addNetwork = useCallback(async (network: Omit<Network, 'id'>) => {
-      // TODO: Add network to user's settings in Firestore
+      // Mock add network
     }, []);
   
     const addCustomCoin = useCallback(async (coinData: Omit<CryptoCurrency, 'id' | 'icon' | 'gradient'>) => {
-      // TODO: Add custom coin to user's settings in Firestore
+      // Mock add custom coin
     }, []);
     
     const addKnownCoinToWallet = useCallback(async (coinId: string) => {
-      // TODO: Update wallet doc in Firestore
+      // Mock add known coin
     }, []);
   
     const updateApiTier = useCallback(async (providerId: string, tierId: string, updates: Partial<ApiKeyTier>) => {
-      // TODO: This might be managed on a backend
+      // Mock update api tier
     }, []);
     
     const updateLlmService = useCallback((modelId: string, category: 'text' | 'image' | 'voice', updates: Partial<LlmService>) => {
@@ -202,11 +197,11 @@ const App: React.FC = () => {
     }, []);
   
     const playGame = useCallback(async (game: Game) => {
-      // TODO: Update game stats and user wallet in Firestore
+      // Mock play game
     }, []);
   
     const publishGame = useCallback(async (newGameData: Omit<Game, 'id' | 'creatorId' | 'playCount'>) => {
-      // TODO: Add new game doc to Firestore
+      // Mock publish game
     }, []);
   
     const viewStream = useCallback((stream: LiveStream) => {
@@ -215,7 +210,7 @@ const App: React.FC = () => {
     }, []);
   
     const goLive = useCallback(async (title: string, gameId?: string) => {
-      // TODO: Add new live stream doc to Firestore
+      // Mock go live
     }, []);
     
     const selectConversation = useCallback((conversationId: string | null) => {
@@ -227,7 +222,7 @@ const App: React.FC = () => {
       content: string,
       attachment?: { type: 'image', url: string } | { type: 'game', gameId: string }
     ) => {
-      // TODO: Add new message doc to conversation subcollection in Firestore
+      // Mock send message
     }, []);
 
     // Mining Logic
@@ -239,11 +234,11 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        // TODO: Refactor mining state to be stored in Firestore per user
+        // Mock mining state effect
     }, [currentUser, addMiningLog]);
 
     const startMining = useCallback(() => {
-        // TODO: Refactor mining logic to be backend-driven or securely timestamped in Firestore
+        // Mock start mining
     }, []);
   
     // Context Value
@@ -328,12 +323,8 @@ const App: React.FC = () => {
         miningState, startMining, addMiningLog
     ]);
 
-    if (!authLoaded) {
-        return <Spinner fullScreen text="Initializing NEXUS..." />;
-    }
-
-    if (!firebaseUser || !currentUser) {
-        return <AuthView />;
+    if (!currentUser) {
+        return <AuthView onAuthSuccess={handleAuthSuccess} />;
     }
 
     if (!dataLoaded) {

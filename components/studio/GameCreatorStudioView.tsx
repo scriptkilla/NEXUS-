@@ -4,8 +4,6 @@ import React, { useState, useContext } from 'react';
 import Card from '../ui/Card';
 import { GAME_SIZES, GAME_DIFFICULTIES, GAME_GENRES, AI_OPTIONS, GAME_SIZE_COSTS } from '../../constants';
 import { SparklesIcon, GamepadIcon, LightbulbIcon, WrenchIcon, PackageIcon } from '../icons/Icons';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../firebase';
 import { type ClickerGameConfig, GameSize, GameDifficulty, AppContextType } from '../../types';
 import { AppContext } from '../context/AppContext';
 import ClickerGame from './ClickerGame';
@@ -105,36 +103,40 @@ export const GameCreatorStudioView: React.FC = () => {
     setError('');
     setGeneratedGameConfig(null);
 
-    const prompt = `
-Act as an expert game designer tasked with creating a simplified, web-based clicker game prototype based on a user's more complex game idea. Your goal is to creatively translate the core theme and feeling of the user's concept into the mechanics of a clicker game. The output must be a valid JSON object matching the provided schema.
+    // Mock function to generate a config based on user input
+    const mockGenerate = (): ClickerGameConfig => {
+        const title = gameTitle || 'Untitled Adventure';
+        const item = gameGenre.toLowerCase().includes('space') || gameGenre.toLowerCase().includes('cyberpunk') ? 'Credits' : 
+                     gameGenre.toLowerCase().includes('rpg') ? 'Gold' :
+                     gameGenre.toLowerCase().includes('shooter') ? 'Ammo' : 'Points';
+        const emoji = gameGenre.toLowerCase().includes('space') || gameGenre.toLowerCase().includes('cyberpunk') ? '💰' : 
+                      gameGenre.toLowerCase().includes('rpg') ? '✨' :
+                      gameGenre.toLowerCase().includes('shooter') ? '💥' : '💎';
 
-**User's Game Idea Analysis:**
-- **Title Idea:** "${gameTitle || 'Not specified'}"
-- **Genre:** ${gameGenre}
-- **Detailed Description:** ${gameDescriptionPrompt || 'A simple and fun clicker game.'}
+        return {
+            title: `Clicker: ${title}`,
+            description: `A clicker game based on the idea: "${gameDescriptionPrompt || 'A grand adventure!'}"`,
+            itemName: item,
+            itemEmoji: emoji,
+            pointsPerClick: 1,
+            upgrades: [
+                { name: `Basic ${item} Collector`, cost: 20, pointsPerSecond: 1 },
+                { name: `Automated ${item} Farm`, cost: 150, pointsPerSecond: 8 },
+                { name: `Advanced ${item} Factory`, cost: 1000, pointsPerSecond: 45 },
+                { name: `Galactic ${item} Empire`, cost: 8000, pointsPerSecond: 250 },
+            ]
+        };
+    };
 
-**Your Task:**
-1.  **Analyze the core fantasy:** What is the central action or feeling the user is trying to capture (e.g., exploring a galaxy, being a samurai, managing a city)?
-2.  **Translate to Clicker Mechanics:**
-    -   **itemName/itemEmoji:** What is the most fundamental, repeatable action in the user's game idea? This will be the clickable item. For an FPS, it could be "Target" (🎯) or "Headshot" (💥). For an RPG, it could be "Slime" (몬스터) or "XP Orb" (✨).
-    -   **title/description:** Create a catchy title and a one-sentence description for this new *clicker version* of the game that honors the original idea.
-    -   **upgrades:** Design 4 thematic upgrades that represent progression in the user's original concept. Their names and effects (pointsPerSecond) should feel like you're getting more powerful within that game world. Costs should be balanced for a simple game, starting low and increasing (e.g., 15, 100, 500, 2000).
-
-**Example Translation:**
--   If the user describes a **"space trading game"**, the \`itemName\` could be "Credits", \`itemEmoji\` could be "💰", and upgrades could be "Bigger Cargo Hold", "Faster Hyperdrive", "Automated Drones", etc.
--   If the user describes a **"farming simulator"**, the \`itemName\` could be "Crop", \`itemEmoji\` could be "🥕", and upgrades could be "Sprinkler System", "Tractor", "Fertilizer", etc.
-
-Now, generate the JSON configuration based on the user's idea provided above.
-`;
-
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
     try {
-      const generateGameCallable = httpsCallable<{ prompt: string }, ClickerGameConfig>(functions, 'generateGame');
-      const result = await generateGameCallable({ prompt });
-      const config = result.data;
+      const config = mockGenerate();
       setGeneratedGameConfig(config);
     } catch (err) {
-      console.error('AI game generation via function failed:', err);
-      setError('Failed to generate game via cloud function. This could be due to a backend error. Please check the function logs. See developer console for details.');
+      console.error('Mock game generation failed:', err);
+      setError('An unexpected error occurred during mock game generation.');
     } finally {
       setIsLoading(false);
     }

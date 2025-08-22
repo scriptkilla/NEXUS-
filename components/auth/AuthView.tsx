@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { NexusLogoIcon } from '../icons/Icons';
-import { auth } from '../../firebase'; // Import the auth instance
+import { MOCK_USERS } from '../../constants';
+import type { User } from '../../types';
 
 interface AuthViewProps {
-  // onAuthSuccess is no longer needed as App.tsx will listen to auth state changes
+  onAuthSuccess: (user: User) => void;
 }
 
-const AuthView: React.FC<AuthViewProps> = () => {
+const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
   const [isLoginView, setIsLoginView] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,40 +16,36 @@ const AuthView: React.FC<AuthViewProps> = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const mockUser = MOCK_USERS.aurora;
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // onAuthSuccess will be triggered by onAuthStateChanged in App.tsx
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
-    } finally {
-      setIsLoading(false);
-    }
+    
+    // Mock login logic
+    setTimeout(() => {
+        if (email.toLowerCase() === mockUser.email.toLowerCase()) {
+            onAuthSuccess(mockUser);
+        } else {
+            setError(`Invalid credentials. For this demo, use the email "${mockUser.email}" and any password.`);
+        }
+        setIsLoading(false);
+    }, 1000);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // After creating the user, update their profile with name/username
-      // Also, create a corresponding user document in Firestore.
-      if (userCredential.user) {
-        await updateProfile(userCredential.user, {
-          displayName: name,
-        });
-        // TODO: Create user document in Firestore here with username, etc.
-      }
-      // onAuthSuccess will be triggered by onAuthStateChanged in App.tsx
-    } catch (err: any) {
-      setError(err.message || 'Sign up failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+
+    // Mock sign up logic
+    setTimeout(() => {
+        // For this demo, signing up will just log you in as the default mock user.
+        console.log("Mock sign up with:", { name, username, email });
+        onAuthSuccess(mockUser);
+        setIsLoading(false);
+    }, 1000);
   };
 
   return (
