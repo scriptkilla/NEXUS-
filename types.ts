@@ -35,7 +35,7 @@ export interface Wallet {
 }
 
 export interface Comment {
-  id: string;
+  id:string;
   user: User;
   content: string;
   likes: number;
@@ -197,7 +197,7 @@ export interface ApiProvider {
   tiers: ApiKeyTier[];
 }
 
-export type View = 'feed' | 'gaming' | 'studio' | 'wallet' | 'apikeys' | 'profile' | 'mining' | 'game_detail' | 'live' | 'stream_detail' | 'messages' | 'video_call';
+export type View = 'feed' | 'gaming' | 'studio' | 'wallet' | 'apikeys' | 'profile' | 'mining' | 'game_detail' | 'live' | 'stream_detail' | 'messages' | 'video_call' | 'asset_store';
 
 export interface LiveStream {
   id: string;
@@ -253,6 +253,30 @@ export interface MiningState {
   hashRate: number;
 }
 
+export interface LlmService {
+    id: string;
+    company: string;
+    icon: (props: { className?: string }) => React.ReactNode;
+    modelName: string;
+    description: string;
+    docsUrl: string;
+    actionType: 'Add Key' | 'Join Waitlist';
+    status: 'connected' | 'disconnected';
+    apiKey?: string;
+}
+
+export interface GameEngineIntegration {
+    id: string;
+    name: string;
+    icon: (props: { className?: string }) => React.ReactNode;
+    primaryLanguage: string;
+    bestFor: string;
+    integrationType: string;
+    actionType: 'Connect';
+    status: 'connected' | 'disconnected';
+}
+
+
 export interface AppContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
@@ -262,6 +286,9 @@ export interface AppContextType {
   
   view: View;
   setView: (view: View) => void;
+
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
   
   currentUser: User;
   allUsers: User[];
@@ -279,6 +306,8 @@ export interface AppContextType {
   updatePost: (postId: string, updates: Partial<Post>) => void;
   isCreatePostModalOpen: boolean;
   setCreatePostModalOpen: (isOpen: boolean) => void;
+  selectedPost: Post | null;
+  viewPost: (post: Post | null) => void;
   
   nxgBalance: number;
   addNxg: (amount: number) => void;
@@ -305,6 +334,13 @@ export interface AppContextType {
   apiProviders: ApiProvider[];
   updateApiTier: (providerId: string, tierId: string, updates: Partial<ApiKeyTier>) => void;
   
+  textModels: LlmService[];
+  imageVideoModels: LlmService[];
+  voiceAudioModels: LlmService[];
+  gameEngines: GameEngineIntegration[];
+  updateLlmService: (modelId: string, category: 'text' | 'image' | 'voice', updates: Partial<LlmService>) => void;
+  updateGameEngine: (engineId: string, updates: Partial<GameEngineIntegration>) => void;
+
   games: Game[];
   selectedGame: Game | null;
   viewGame: (game: Game) => void;

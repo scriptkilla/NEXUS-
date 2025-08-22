@@ -1,9 +1,9 @@
 
 
 import React from 'react';
-import { type Post, type CryptoCurrency, type Theme, GameSize, GameDifficulty, type AIModel, type ApiProvider, type View, type Game, type User, type Transaction, type Wallet, type Network, type Achievement, type LiveStream, type Conversation } from './types';
+import { type Post, type CryptoCurrency, type Theme, GameSize, GameDifficulty, type AIModel, type ApiProvider, type View, type Game, type User, type Transaction, type Wallet, type Network, type Achievement, type LiveStream, type Conversation, type LlmService, type GameEngineIntegration } from './types';
 import {
-  HomeIcon, GamepadIcon, WrenchIcon, WalletIcon, KeyIcon, UserIcon, NexusIcon, BtcIcon, SolIcon, EgldIcon, LtcIcon, TrxIcon, OpenAIIcon, ClaudeIcon, GeminiIcon, HuggingFaceIcon, EthIcon, UsdcIcon, LlamaIcon, SparklesIcon, RadioIcon, MessageSquareIcon,
+  HomeIcon, GamepadIcon, WrenchIcon, WalletIcon, KeyIcon, UserIcon, NexusIcon, BtcIcon, SolIcon, EgldIcon, LtcIcon, TrxIcon, OpenAIIcon, ClaudeIcon, GeminiIcon, EthIcon, UsdcIcon, SparklesIcon, RadioIcon, MessageSquareIcon, MetaIcon, MistralIcon, CohereIcon, PerplexityIcon, StabilityIcon, MidjourneyIcon, RunwayIcon, ElevenLabsIcon, SunoIcon, UnityIcon, UnrealIcon, GodotIcon, RobloxIcon, GameMakerIcon, RpgMakerIcon, LumberyardIcon,
 } from './components/icons/Icons';
 
 export const SIDEBAR_LINKS: { name: string; icon: React.ReactNode; view: View }[] = [
@@ -41,7 +41,7 @@ export const MOCK_WALLETS: Wallet[] = [
     userId: 'u1',
     address: 'Gf7dG2x2q4qA9yB8c6D5e4F3g2H1j0kL9m8N7p6Q5rS',
     balances: {
-      'NXG': 1254.32,
+      'NXG': 1000,
       'ETH': 1.5,
       'USDC': 3500.50,
       'BTC': 0.05,
@@ -55,10 +55,10 @@ export const MOCK_WALLETS: Wallet[] = [
   {
     id: 'w2',
     name: 'Trading Vault',
-    userId: 'u1', // Also Aurora's for simplicity
+    userId: 'u1',
     address: '4BoqV6a1qZ9X8c7v6B5n4M3l2K1j0hGf9e8d7C6b5A4s',
     balances: {
-      'NXG': 50000.00,
+      'NXG': 1000,
       'ETH': 10,
       'USDC': 150000,
       'BTC': 1.2,
@@ -67,6 +67,46 @@ export const MOCK_WALLETS: Wallet[] = [
       'TRX': 250000,
     },
     seedPhrase: 'rapid wolf kiwi praise peanut hazard market quantum fabric valve foam absorb'
+  },
+  {
+    id: 'w3',
+    name: 'ByteFlow\'s Wallet',
+    userId: 'u2',
+    address: 'Hq8rP9sX7yZ6w5v4u3t2s1R0qP9oN8m7L6k5J4h3G2f1',
+    balances: { 'NXG': 1000, 'ETH': 2, 'SOL': 10 },
+    seedPhrase: 'puzzle squirrel helmet garlic mouse drill festival sea early wonder high jump'
+  },
+  {
+    id: 'w4',
+    name: 'Cypher\'s Wallet',
+    userId: 'u3',
+    address: 'Kj9hG8f7E6d5C4b3A2z1Y9x8W7v6U5t4S3r2Q1p0oN9m',
+    balances: { 'NXG': 1000, 'BTC': 0.1, 'EGLD': 50 },
+    seedPhrase: 'lion dance human nothing govern budget draft episode answer label glove outside'
+  },
+  {
+    id: 'w5',
+    name: 'Zenith\'s Wallet',
+    userId: 'u4',
+    address: 'Lm0nK1j2H3g4F5d6S7a8Z9y0X8c7V6b5N4m3L2k1J0h9',
+    balances: { 'NXG': 1000, 'USDC': 2500, 'TRX': 20000 },
+    seedPhrase: 'victory paper box social embody list desk oven elbow grace shoulder find'
+  },
+  {
+    id: 'w6',
+    name: 'Echo\'s Wallet',
+    userId: 'u5',
+    address: 'Bv1c2X3z4A5s6D7f8G9h0J9k8L7m6N5b4V3c2X1z0a9s',
+    balances: { 'NXG': 1000, 'LTC': 10 },
+    seedPhrase: 'cause myth escape pretty tourist afford client wedding chaos rebuild task fine'
+  },
+  {
+    id: 'w7',
+    name: 'Shard\'s Wallet',
+    userId: 'u6',
+    address: 'Po1i2U3y4T5r6E7w8Q9a0S8d7F6g5H4j3K2l1Z0x9c8v',
+    balances: { 'NXG': 1000 },
+    seedPhrase: 'ozone improve stay vibrant rural often track legal mushroom wild owner another'
   }
 ];
 
@@ -352,46 +392,40 @@ export const API_PROVIDERS: ApiProvider[] = [
       { id: 'nexus-max', name: 'NEXUS MAX', status: 'disconnected', apiKey: undefined, usage: 0, limit: 100000, tokensUsed: 0, cost: 0, rateLimitRpm: 1200, rateLimitTpm: 200000 },
     ]
   },
-  {
-    id: 'openai',
-    name: 'OpenAI',
-    icon: OpenAIIcon,
-    tiers: [
-      { id: 'gpt-4', name: 'GPT-4', status: 'connected', apiKey: 'mock_openai_gpt4_key', usage: 780, limit: 1000, tokensUsed: 7800000, cost: 25.50, rateLimitRpm: 60, rateLimitTpm: 80000 },
-      { id: 'gpt-3.5', name: 'GPT 3.5', status: 'connected', apiKey: 'mock_openai_gpt3.5_key', usage: 250, limit: 10000, tokensUsed: 2500000, cost: 5.10, rateLimitRpm: 1000, rateLimitTpm: 160000 },
-    ]
-  },
-  {
-    id: 'gemini',
-    name: 'Gemini',
-    icon: GeminiIcon,
-    tiers: [
-       { id: 'gemini-pro', name: 'Gemini Pro', status: 'disconnected', apiKey: undefined, usage: 0, limit: 1000, tokensUsed: 0, cost: 0, rateLimitRpm: 60, rateLimitTpm: 100000 },
-    ]
-  },
-  {
-    id: 'llama',
-    name: 'Llama',
-    icon: LlamaIcon,
-    tiers: [
-       { id: 'llama-3', name: 'Llama 3', status: 'disconnected', apiKey: undefined, usage: 0, limit: 1000, tokensUsed: 0, cost: 0, rateLimitRpm: 60, rateLimitTpm: 100000 },
-    ]
-  },
-   {
-    id: 'claude',
-    name: 'Claude',
-    icon: ClaudeIcon,
-    tiers: [
-       { id: 'claude-3-opus', name: 'Claude 3 Opus', status: 'disconnected', apiKey: undefined, usage: 0, limit: 1000, tokensUsed: 0, cost: 0, rateLimitRpm: 60, rateLimitTpm: 100000 },
-       { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', status: 'connected', apiKey: 'mock_claude_sonnet_key', usage: 320, limit: 5000, tokensUsed: 320000, cost: 3.20, rateLimitRpm: 100, rateLimitTpm: 40000 },
-    ]
-  },
-  {
-    id: 'huggingface',
-    name: 'Hugging Face',
-    icon: HuggingFaceIcon,
-    tiers: [
-       { id: 'inference-api', name: 'Inference API', status: 'disconnected', apiKey: undefined, usage: 0, limit: 10000, tokensUsed: 0, cost: 0, rateLimitRpm: 60, rateLimitTpm: 100000 },
-    ]
-  }
+];
+
+export const TEXT_MODELS: LlmService[] = [
+    { id: 'oai-gpt4o', company: 'OpenAI', icon: OpenAIIcon, modelName: 'GPT-4o', description: 'Fast, multimodal, strongest model', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+    { id: 'oai-gpt4t', company: 'OpenAI', icon: OpenAIIcon, modelName: 'GPT-4 Turbo', description: 'Previous high-intelligence model', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+    { id: 'anth-claude3o', company: 'Anthropic', icon: ClaudeIcon, modelName: 'Claude 3 Opus', description: 'Most powerful model for complex tasks', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+    { id: 'anth-claude3s', company: 'Anthropic', icon: ClaudeIcon, modelName: 'Claude 3 Sonnet', description: 'Balanced model for speed and skill', docsUrl: '#', actionType: 'Add Key', status: 'connected', apiKey: 'mock_claude_sonnet_key' },
+    { id: 'goog-gem15p', company: 'Google', icon: GeminiIcon, modelName: 'Gemini 1.5 Pro', description: 'Advanced reasoning across modalities', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+    { id: 'goog-gem10f', company: 'Google', icon: GeminiIcon, modelName: 'Gemini 1.0 Flash', description: 'Fast and efficient for scale', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+    { id: 'meta-llama3', company: 'Meta', icon: MetaIcon, modelName: 'Llama 3 (70B)', description: 'Powerful open-weight model', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+    { id: 'mist-large', company: 'Mistral AI', icon: MistralIcon, modelName: 'Mistral Large', description: 'Strong multilingual capabilities', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+    { id: 'coh-commandr', company: 'Cohere', icon: CohereIcon, modelName: 'Command R+', description: 'Optimized for enterprise workflows', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+    { id: 'perp-sonar', company: 'Perplexity AI', icon: PerplexityIcon, modelName: 'Sonar', description: 'Powerful real-time web search', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+];
+
+export const IMAGE_VIDEO_MODELS: LlmService[] = [
+    { id: 'oai-dalle3', company: 'OpenAI', icon: OpenAIIcon, modelName: 'DALL-E 3', description: 'Creates realistic and artistic images', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+    { id: 'stab-sd3', company: 'Stability AI', icon: StabilityIcon, modelName: 'Stable Diffusion 3', description: 'Open image generation model', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+    { id: 'mid-v6', company: 'Midjourney', icon: MidjourneyIcon, modelName: 'Midjourney v6', description: 'Highly stylistic and artistic images', docsUrl: '#', actionType: 'Join Waitlist', status: 'disconnected' },
+    { id: 'runway-gen2', company: 'Runway ML', icon: RunwayIcon, modelName: 'Gen-2', description: 'Text to Video and Image to Video', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+];
+
+export const VOICE_AUDIO_MODELS: LlmService[] = [
+    { id: 'oai-whisper3', company: 'OpenAI', icon: OpenAIIcon, modelName: 'Whisper v3', description: 'Speech-to-text transcription', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+    { id: 'eleven-v2', company: 'ElevenLabs', icon: ElevenLabsIcon, modelName: 'Eleven Multilingual v2', description: 'Natural text-to-speech voice cloning', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+    { id: 'suno-ai', company: 'Suno', icon: SunoIcon, modelName: 'Suno AI', description: 'AI music generation', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+];
+
+export const GAME_ENGINE_INTEGRATIONS: GameEngineIntegration[] = [
+    { id: 'unity', name: 'Unity', icon: UnityIcon, primaryLanguage: 'C#', bestFor: '3D/2D, Mobile, AR/VR', integrationType: 'OAuth Link / Project Upload', actionType: 'Connect', status: 'disconnected' },
+    { id: 'unreal', name: 'Unreal Engine', icon: UnrealIcon, primaryLanguage: 'C++, Blueprints', bestFor: 'AAA Graphics, Cinematics', integrationType: 'Git Link / Plugin Install', actionType: 'Connect', status: 'disconnected' },
+    { id: 'godot', name: 'Godot', icon: GodotIcon, primaryLanguage: 'GDScript, C#', bestFor: '2D, Lightweight Projects', integrationType: 'Project Upload / API Key', actionType: 'Connect', status: 'disconnected' },
+    { id: 'roblox', name: 'Roblox Studio', icon: RobloxIcon, primaryLanguage: 'Luau', bestFor: 'Metaverse, Social Games', integrationType: 'OAuth Link', actionType: 'Connect', status: 'disconnected' },
+    { id: 'gamemaker', name: 'GameMaker', icon: GameMakerIcon, primaryLanguage: 'GML', bestFor: '2D, Beginner-Friendly', integrationType: 'Project Upload', actionType: 'Connect', status: 'disconnected' },
+    { id: 'rpgmaker', name: 'RPG Maker', icon: RpgMakerIcon, primaryLanguage: 'JavaScript', bestFor: '2D Story Games', integrationType: 'Project Upload', actionType: 'Connect', status: 'disconnected' },
+    { id: 'lumberyard', name: 'Amazon Lumberyard', icon: LumberyardIcon, primaryLanguage: 'C++, Lua', bestFor: 'Open 3D Foundation (O3DE)', integrationType: 'Git Link', actionType: 'Connect', status: 'disconnected' },
 ];

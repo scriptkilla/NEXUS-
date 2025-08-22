@@ -5,7 +5,6 @@ import { AppContext } from '../context/AppContext';
 import { HeartIcon, RepeatIcon, MessageCircleIcon, GiftIcon, MoreHorizontalIcon, VerifiedIcon, SparklesIcon, GamepadIcon, UserPlusIcon, UserCheckIcon, SlashIcon } from '../icons/Icons';
 import TipDropdown from './TipDropdown';
 import TipModal from './TipModal';
-import PostDetailModal from './PostDetailModal';
 
 interface PostCardProps {
   post: Post;
@@ -19,7 +18,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [repostCount, setRepostCount] = useState(post.reposts);
   const [isTipDropdownOpen, setTipDropdownOpen] = useState(false);
   const [isTipModalOpen, setTipModalOpen] = useState(false);
-  const [isPostModalOpen, setPostModalOpen] = useState(false);
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoCurrency | null>(null);
   const tipButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -45,7 +43,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   }, []);
 
   if (!context) return null;
-  const { addNxg, updatePost, currentUser, toggleFollow, viewGame, viewProfile, blockUser, unblockUser } = context;
+  const { addNxg, updatePost, currentUser, toggleFollow, viewGame, viewProfile, blockUser, unblockUser, viewPost } = context;
 
   const handleLike = () => {
     const rewards = post.engagementRewards;
@@ -97,7 +95,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const openPostModal = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button, a, input')) return;
-    setPostModalOpen(true);
+    viewPost(post);
   };
 
   const handleVote = (e: React.MouseEvent, optionIndex: number) => {
@@ -247,7 +245,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 <RepeatIcon />
                 <span className="text-sm">{repostCount.toLocaleString()}</span>
               </button>
-              <button onClick={(e) => { e.stopPropagation(); setPostModalOpen(true); }} className="flex items-center gap-2 hover:text-blue-500 transition-colors"><MessageCircleIcon /><span className="text-sm">{post.comments.length.toLocaleString()}</span></button>
+              <button onClick={(e) => { e.stopPropagation(); viewPost(post); }} className="flex items-center gap-2 hover:text-blue-500 transition-colors"><MessageCircleIcon /><span className="text-sm">{post.comments.length.toLocaleString()}</span></button>
               <div className="relative" ref={tipButtonRef as any}>
                 <button onClick={(e) => { e.stopPropagation(); setTipDropdownOpen(prev => !prev); }} className="flex items-center gap-2 hover:text-yellow-500 transition-colors"><GiftIcon /><span className="hidden sm:inline text-sm">Tip</span></button>
                 {isTipDropdownOpen && <TipDropdown onSelect={handleTipSelect} />}
@@ -264,7 +262,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       </Card>
       
       {selectedCrypto && <TipModal isOpen={isTipModalOpen} onClose={() => setTipModalOpen(false)} crypto={selectedCrypto} recipient={post.author} />}
-      <PostDetailModal isOpen={isPostModalOpen} onClose={() => setPostModalOpen(false)} post={post} />
     </>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import Card from '../ui/Card';
+import { EyeIcon, EyeOffIcon } from '../icons/Icons';
 
 interface AddApiKeyModalProps {
   isOpen: boolean;
@@ -13,10 +14,12 @@ interface AddApiKeyModalProps {
 
 export const AddApiKeyModal: React.FC<AddApiKeyModalProps> = ({ isOpen, onClose, onSave, providerName, tierName, providerIcon }) => {
   const [apiKey, setApiKey] = useState('');
+  const [isKeyVisible, setIsKeyVisible] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setApiKey('');
+      setIsKeyVisible(false);
     }
   }, [isOpen]);
 
@@ -40,12 +43,20 @@ export const AddApiKeyModal: React.FC<AddApiKeyModalProps> = ({ isOpen, onClose,
                 {providerIcon}
               </span>
               <input
-                type="password"
+                type={isKeyVisible ? 'text' : 'password'}
                 value={apiKey}
                 onChange={e => setApiKey(e.target.value)}
                 placeholder="Enter your API key..."
-                className="w-full bg-[var(--bg-glass)] border border-[var(--border-color)] rounded-lg p-3 pl-11 focus:ring-2 focus:ring-[var(--accent-primary)] focus:outline-none transition-all"
+                className="w-full bg-[var(--bg-glass)] border border-[var(--border-color)] rounded-lg p-3 pl-11 pr-10 focus:ring-2 focus:ring-[var(--accent-primary)] focus:outline-none transition-all"
               />
+              <button
+                type="button"
+                onClick={() => setIsKeyVisible(!isKeyVisible)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--text-secondary)] hover:text-white"
+                aria-label={isKeyVisible ? 'Hide API key' : 'Show API key'}
+              >
+                {isKeyVisible ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+              </button>
             </div>
           </div>
         </div>

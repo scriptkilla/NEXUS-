@@ -1,7 +1,9 @@
+
+
 import React, { useState, useContext } from 'react';
 import Card from '../ui/Card';
 import { GAME_SIZES, GAME_DIFFICULTIES, GAME_GENRES, AI_OPTIONS, GAME_SIZE_COSTS } from '../../constants';
-import { SparklesIcon, GamepadIcon } from '../icons/Icons';
+import { SparklesIcon, GamepadIcon, LightbulbIcon, WrenchIcon, PackageIcon } from '../icons/Icons';
 import { GoogleGenAI, Type } from "@google/genai";
 import { type ClickerGameConfig, GameSize, GameDifficulty, AppContextType } from '../../types';
 import { AppContext } from '../context/AppContext';
@@ -45,6 +47,7 @@ export const GameCreatorStudioView: React.FC = () => {
   const [error, setError] = useState('');
 
   if (!context) return null;
+  const { setView } = context;
 
   const handleModelChange = (category: string, modelName: string) => {
     const group = AI_OPTIONS.find(g => g.title === category);
@@ -102,14 +105,25 @@ export const GameCreatorStudioView: React.FC = () => {
     setGeneratedGameConfig(null);
 
     const prompt = `
-Create the configuration for a simple web-based clicker game based on the user's specifications. The output must be a valid JSON object matching the provided schema.
+Act as an expert game designer tasked with creating a simplified, web-based clicker game prototype based on a user's more complex game idea. Your goal is to creatively translate the core theme and feeling of the user's concept into the mechanics of a clicker game. The output must be a valid JSON object matching the provided schema.
 
-User's Game Idea:
-- Title Idea: "${gameTitle || 'Not specified'}"
-- Genre: ${gameGenre}
-- Game Description: ${gameDescriptionPrompt || 'A simple and fun clicker game.'}
+**User's Game Idea Analysis:**
+- **Title Idea:** "${gameTitle || 'Not specified'}"
+- **Genre:** ${gameGenre}
+- **Detailed Description:** ${gameDescriptionPrompt || 'A simple and fun clicker game.'}
 
-Based on this, generate creative and fitting values for the JSON object. The theme of the items and upgrades should directly relate to the user's idea. The upgrade costs should be balanced for a simple game, starting low and increasing.
+**Your Task:**
+1.  **Analyze the core fantasy:** What is the central action or feeling the user is trying to capture (e.g., exploring a galaxy, being a samurai, managing a city)?
+2.  **Translate to Clicker Mechanics:**
+    -   **itemName/itemEmoji:** What is the most fundamental, repeatable action in the user's game idea? This will be the clickable item. For an FPS, it could be "Target" (🎯) or "Headshot" (💥). For an RPG, it could be "Slime" (몬스터) or "XP Orb" (✨).
+    -   **title/description:** Create a catchy title and a one-sentence description for this new *clicker version* of the game that honors the original idea.
+    -   **upgrades:** Design 4 thematic upgrades that represent progression in the user's original concept. Their names and effects (pointsPerSecond) should feel like you're getting more powerful within that game world. Costs should be balanced for a simple game, starting low and increasing (e.g., 15, 100, 500, 2000).
+
+**Example Translation:**
+-   If the user describes a **"space trading game"**, the \`itemName\` could be "Credits", \`itemEmoji\` could be "💰", and upgrades could be "Bigger Cargo Hold", "Faster Hyperdrive", "Automated Drones", etc.
+-   If the user describes a **"farming simulator"**, the \`itemName\` could be "Crop", \`itemEmoji\` could be "🥕", and upgrades could be "Sprinkler System", "Tractor", "Fertilizer", etc.
+
+Now, generate the JSON configuration based on the user's idea provided above.
 `;
 
     const schema = {
@@ -186,6 +200,22 @@ Based on this, generate creative and fitting values for the JSON object. The the
           AI Game Creator Studio
         </h1>
         <p className="text-[var(--text-secondary)] mt-2">Bring your game ideas to life with the power of generative AI.</p>
+      </div>
+
+      <div className="flex border-b border-[var(--border-color)]">
+        <button
+          className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]`}
+        >
+          <WrenchIcon className="w-5 h-5"/>
+          Blueprint
+        </button>
+        <button
+          onClick={() => setView('asset_store')}
+          className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors text-[var(--text-secondary)] hover:text-white`}
+        >
+          <PackageIcon className="w-5 h-5"/>
+          Asset Store
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -268,12 +298,56 @@ Based on this, generate creative and fitting values for the JSON object. The the
               })}
             </div>
           </Card>
+
+          <Card>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-3">
+              <LightbulbIcon className="w-7 h-7 text-yellow-400"/>
+              How Games Are Made: A Look Under the Hood
+            </h2>
+            <div className="space-y-4 text-[var(--text-secondary)] text-sm leading-relaxed prose prose-invert prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
+                <p>
+                    Game engines are built on top of low-level Application Programming Interfaces (APIs). Sometimes, for extreme performance or custom needs, developers will bypass the engine and use these APIs directly.
+                </p>
+
+                <h3 className="text-base font-bold text-white !mt-6 !mb-2">Graphics APIs (The most important low-level API)</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                    <li><strong>Vulkan:</strong> A modern, high-performance, low-overhead API for Windows, Linux, Android. Offers the most control but is very complex.</li>
+                    <li><strong>DirectX 12 (D3D12):</strong> Microsoft's modern, low-level API (the counterpart to Vulkan). Used primarily on Windows and Xbox.</li>
+                    <li><strong>Metal:</strong> Apple's modern, low-level API for macOS and iOS. Similar in philosophy to Vulkan/DX12.</li>
+                    <li><strong>WebGPU:</strong> The emerging modern standard for high-performance graphics on the web, designed to translate to Vulkan, Metal, and D3D12.</li>
+                </ul>
+
+                <h3 className="text-base font-bold text-white !mt-6 !mb-2">How It All Fits Together</h3>
+                <p>Here’s a simplified view of the stack:</p>
+                <pre className="bg-[var(--bg-secondary)] p-4 rounded-lg text-xs font-mono select-all">
+{`+-------------------------------------------------------+
+|        YOUR GAME CODE (C#, GDScript, C++)           |
++-------------------------------------------------------+
+|      GAME ENGINE API (Unity, Unreal, Godot)         |
++-------------------------------------------------------+
+|    LOW-LEVEL APIS (Vulkan, DirectX, Metal, etc.)    |
++-------------------------------------------------------+
+|          OPERATING SYSTEM & HARDWARE DRIVERS          |
++-------------------------------------------------------+`}
+                </pre>
+                <p>
+                    As a game developer using an engine like NEXUS AI Studio, you primarily interact with the top layer. The engine handles the complexity of the low-level APIs for you, allowing you to focus on creativity and game design.
+                </p>
+            </div>
+        </Card>
+
         </div>
 
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <h2 className="text-2xl font-bold mb-4">Generate</h2>
             <p className="text-[var(--text-secondary)] text-sm mb-6">Once your blueprint is ready, let our AI engine generate a playable mini-game based on your idea.</p>
+            <div className="text-xs text-yellow-400/80 bg-yellow-900/30 p-2 rounded-md mb-4 flex items-start gap-2">
+              <LightbulbIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span>
+                <strong>Note:</strong> The current AI generates a clicker-style mini-game. The theme, items, and upgrades will be creatively adapted from your description.
+              </span>
+            </div>
             <button 
               onClick={handleGenerateGame}
               disabled={isLoading}

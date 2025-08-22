@@ -1,8 +1,8 @@
 
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import type { View, Theme, Post, NotificationSettings, PrivacySettings, User, ApiProvider, ApiKeyTier, Wallet, Network, CryptoCurrency, Game, LiveStream, CreatePostData, Conversation, MiningState } from './types';
-import { THEMES } from './constants';
+import type { View, Theme, Post, NotificationSettings, PrivacySettings, User, ApiProvider, ApiKeyTier, Wallet, Network, CryptoCurrency, Game, LiveStream, CreatePostData, Conversation, MiningState, LlmService, GameEngineIntegration } from './types';
+import { THEMES, TEXT_MODELS, IMAGE_VIDEO_MODELS, VOICE_AUDIO_MODELS, GAME_ENGINE_INTEGRATIONS } from './constants';
 import * as api from './api';
 import Layout from './components/layout/Layout';
 import FeedView from './components/feed/FeedView';
@@ -18,10 +18,12 @@ import { StreamDetailView } from './components/live/StreamDetailView';
 import MessagesView from './components/messages/MessagesView';
 import VideoCallView from './components/messages/VideoCallView';
 import CreatePostModal from './components/feed/CreatePostModal';
+import PostDetailModal from './components/feed/PostDetailModal';
 import CustomThemeModal from './components/theme/CustomThemeModal';
 import { AppContext } from './components/context/AppContext';
 import AuthView from './components/auth/AuthView';
 import Spinner from './components/ui/Spinner';
+import AssetStoreView from './components/studio/AssetStoreView';
 
 const App: React.FC = () => {
     // Auth State
@@ -34,6 +36,9 @@ const App: React.FC = () => {
     const [isCustomThemeEditorOpen, setCustomThemeEditorOpen] = useState(false);
     const [view, setView] = useState<View>('feed');
     const [isCreatePostModalOpen, setCreatePostModalOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+
 
     // Data State
     const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -50,6 +55,12 @@ const App: React.FC = () => {
     const [selectedStream, setSelectedStream] = useState<LiveStream | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+
+    // New API Key Management State
+    const [textModels, setTextModels] = useState<LlmService[]>(TEXT_MODELS);
+    const [imageVideoModels, setImageVideoModels] = useState<LlmService[]>(IMAGE_VIDEO_MODELS);
+    const [voiceAudioModels, setVoiceAudioModels] = useState<LlmService[]>(VOICE_AUDIO_MODELS);
+    const [gameEngines, setGameEngines] = useState<GameEngineIntegration[]>(GAME_ENGINE_INTEGRATIONS);
 
     // Settings State
     const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({ likes: true, comments: true, newFollowers: true });
@@ -161,6 +172,10 @@ const App: React.FC = () => {
         const updatedPost = await api.updatePost(postId, updates);
         setPosts(prev => prev.map(p => p.id === postId ? updatedPost : p));
     }, []);
+    
+    const viewPost = useCallback((post: Post | null) => {
+        setSelectedPost(post);
+    }, []);
   
     const addNxg = useCallback(async (amount: number) => {
         if (!activeWalletId) return;
@@ -214,6 +229,19 @@ const App: React.FC = () => {
         setApiProviders(updatedProviders);
     }, []);
     
+    const updateLlmService = useCallback((modelId: string, category: 'text' | 'image' | 'voice', updates: Partial<LlmService>) => {
+        const updater = (setter: React.Dispatch<React.SetStateAction<LlmService[]>>) => {
+            setter(prev => prev.map(model => model.id === modelId ? { ...model, ...updates } : model));
+        };
+        if (category === 'text') updater(setTextModels);
+        else if (category === 'image') updater(setImageVideoModels);
+        else if (category === 'voice') updater(setVoiceAudioModels);
+    }, []);
+
+    const updateGameEngine = useCallback((engineId: string, updates: Partial<GameEngineIntegration>) => {
+        setGameEngines(prev => prev.map(engine => engine.id === engineId ? { ...engine, ...updates } : engine));
+    }, []);
+
     const viewGame = useCallback((game: Game) => {
         setSelectedGame(game);
         setView('game_detail');
@@ -318,8 +346,8 @@ const App: React.FC = () => {
     
     // Core mining loop
     useEffect(() => {
-        let miningInterval: number | null = null;
-        let rewardInterval: number | null = null;
+        let miningInterval: any = null;
+        let rewardInterval: any = null;
 
         if (miningState.isMining && currentUser) {
             const boost = currentUser.miningBoost || 1;
@@ -412,6 +440,7 @@ const App: React.FC = () => {
         openCustomThemeEditor: () => setCustomThemeEditorOpen(true),
         closeCustomThemeEditor: () => setCustomThemeEditorOpen(false),
         view, setView,
+        searchQuery, setSearchQuery,
         currentUser: currentUser!,
         allUsers,
         setCurrentUser,
@@ -427,6 +456,8 @@ const App: React.FC = () => {
         updatePost,
         isCreatePostModalOpen,
         setCreatePostModalOpen,
+        selectedPost,
+        viewPost,
         nxgBalance,
         addNxg,
         wallets,
@@ -447,6 +478,12 @@ const App: React.FC = () => {
         setPrivacySettings,
         apiProviders,
         updateApiTier,
+        textModels,
+        imageVideoModels,
+        voiceAudioModels,
+        gameEngines,
+        updateLlmService,
+        updateGameEngine,
         games,
         selectedGame,
         viewGame,
@@ -467,10 +504,11 @@ const App: React.FC = () => {
             addLog: addMiningLog,
         },
     }), [
-        theme, isCustomThemeEditorOpen, view, currentUser, allUsers, setCurrentUser, toggleFollow, selectedProfile,
-        viewProfile, blockUser, unblockUser, reportUser, posts, createPost, updatePost, isCreatePostModalOpen,
+        theme, isCustomThemeEditorOpen, view, searchQuery, currentUser, allUsers, setCurrentUser, toggleFollow, selectedProfile,
+        viewProfile, blockUser, unblockUser, reportUser, posts, createPost, updatePost, isCreatePostModalOpen, selectedPost, viewPost,
         nxgBalance, addNxg, wallets, activeWallet, activeWalletId, sendCrypto, swapCrypto, networks, addNetwork, knownCurrencies,
         addCustomCoin, addKnownCoinToWallet, notificationSettings, privacySettings, apiProviders, updateApiTier,
+        textModels, imageVideoModels, voiceAudioModels, gameEngines, updateLlmService, updateGameEngine,
         games, selectedGame, viewGame, playGame, publishGame, liveStreams, selectedStream, viewStream, goLive,
         handleLogout, conversations, selectedConversation, selectConversation, sendMessage, addWallet,
         miningState, startMining, addMiningLog
@@ -492,6 +530,7 @@ const App: React.FC = () => {
             case 'feed': return <FeedView />;
             case 'gaming': return <GamingView />;
             case 'studio': return <GameCreatorStudioView />;
+            case 'asset_store': return <AssetStoreView />;
             case 'wallet': return <WalletView />;
             case 'apikeys': return <ApiKeyManagerView />;
             case 'profile': return <ProfileView user={profileToView} />;
@@ -522,6 +561,7 @@ const App: React.FC = () => {
                 </Layout>
                 <CreatePostModal isOpen={isCreatePostModalOpen} onClose={() => setCreatePostModalOpen(false)} />
                 <CustomThemeModal isOpen={isCustomThemeEditorOpen} onClose={() => setCustomThemeEditorOpen(false)} />
+                <PostDetailModal isOpen={!!selectedPost} onClose={() => viewPost(null)} post={selectedPost} />
             </div>
         </AppContext.Provider>
     );

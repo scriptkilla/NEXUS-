@@ -102,7 +102,7 @@ export async function signup(data: { name: string, username: string, email: stri
         name: `${name}'s Wallet`,
         userId: newUser.id,
         address: `Gf${Math.random().toString(36).substring(2, 15)}...`,
-        balances: { 'NXG': 10 }, // Give some starting NXG
+        balances: { 'NXG': 1000 }, // Give some starting NXG
         seedPhrase: 'new user seed phrase mock random words apple banana cherry dog elephant',
     };
     db.wallets.push(newWallet);

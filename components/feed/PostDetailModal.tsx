@@ -77,12 +77,12 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, onProfileClick, onRe
 interface PostDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  post: Post;
+  post: Post | null;
 }
 
 const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post }) => {
   const context = useContext(AppContext);
-  const [comments, setComments] = useState<Comment[]>(post.comments);
+  const [comments, setComments] = useState<Comment[]>(post?.comments || []);
   const [newComment, setNewComment] = useState('');
   const textInputRef = useRef<HTMLTextAreaElement>(null);
   
@@ -91,7 +91,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post
   const [tipRecipient, setTipRecipient] = useState<User | null>(null);
   const nxgCurrency = CRYPTO_CURRENCIES.find(c => c.symbol === 'NXG') || CRYPTO_CURRENCIES[0];
 
-  if (!context) return null;
+  if (!context || !post) return null;
   const { currentUser, addNxg, updatePost, viewProfile } = context;
 
   const handleProfileClick = (user: User) => {
