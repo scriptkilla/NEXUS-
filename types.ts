@@ -296,6 +296,7 @@ export interface AppContextType {
   toggleFollow: (userId: string) => void;
   selectedProfile: User | null;
   viewProfile: (user: User) => void;
+  viewMyProfile: () => void;
   blockUser: (userId: string) => void;
   unblockUser: (userId: string) => void;
   reportUser: (userId: string, reason: string, details: string) => void;

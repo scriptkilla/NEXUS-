@@ -143,6 +143,11 @@ const App: React.FC = () => {
         setView('profile');
     }, []);
 
+    const viewMyProfile = useCallback(() => {
+        setSelectedProfileId(null);
+        setView('profile');
+    }, []);
+
     const blockUser = useCallback(async (userId: string) => {
       if (!currentUser) return;
       const updatedUser = await api.blockUser(currentUser.id, userId);
@@ -447,6 +452,7 @@ const App: React.FC = () => {
         toggleFollow,
         selectedProfile,
         viewProfile,
+        viewMyProfile,
         blockUser,
         unblockUser,
         reportUser,
@@ -505,7 +511,7 @@ const App: React.FC = () => {
         },
     }), [
         theme, isCustomThemeEditorOpen, view, searchQuery, currentUser, allUsers, setCurrentUser, toggleFollow, selectedProfile,
-        viewProfile, blockUser, unblockUser, reportUser, posts, createPost, updatePost, isCreatePostModalOpen, selectedPost, viewPost,
+        viewProfile, viewMyProfile, blockUser, unblockUser, reportUser, posts, createPost, updatePost, isCreatePostModalOpen, selectedPost, viewPost,
         nxgBalance, addNxg, wallets, activeWallet, activeWalletId, sendCrypto, swapCrypto, networks, addNetwork, knownCurrencies,
         addCustomCoin, addKnownCoinToWallet, notificationSettings, privacySettings, apiProviders, updateApiTier,
         textModels, imageVideoModels, voiceAudioModels, gameEngines, updateLlmService, updateGameEngine,
