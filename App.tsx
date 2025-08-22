@@ -22,6 +22,7 @@ import { AppContext } from './components/context/AppContext';
 import AuthView from './components/auth/AuthView';
 import Spinner from './components/ui/Spinner';
 import AssetStoreView from './components/studio/AssetStoreView';
+import { KeyIcon } from './components/icons/Icons';
 
 const App: React.FC = () => {
     // Auth State
@@ -80,8 +81,33 @@ const App: React.FC = () => {
     const selectedConversation = useMemo(() => conversations.find(c => c.id === selectedConversationId), [conversations, selectedConversationId]);
 
     const handleAuthSuccess = (user: User) => {
+        const userExists = allUsers.some(u => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase());
+
+        if (!userExists) {
+            // New user from sign-up
+            setAllUsers(prevUsers => [...prevUsers, user]);
+            
+            const newWallet: Wallet = {
+                id: `w_${user.username.toLowerCase()}`,
+                name: `${user.name}'s Wallet`,
+                userId: user.id,
+                address: `NEXUS-addr-${user.username.toLowerCase()}-${Date.now().toString().slice(-4)}`,
+                balances: { 'NXG': 1000 }, // Welcome bonus
+                seedPhrase: `welcome to nexus ${user.username} this is a mock seed phrase for demo`,
+            };
+            
+            setWallets(prevWallets => [...prevWallets, newWallet]);
+            setActiveWalletId(newWallet.id);
+        } else {
+             // Existing user from login, find their wallet
+             const userWallet = wallets.find(w => w.userId === user.id);
+             if (userWallet) {
+                setActiveWalletId(userWallet.id);
+             }
+        }
+
         setCurrentUserState(user);
-        setDataLoaded(true); // Since we use mock data, we can load instantly
+        setDataLoaded(true);
     };
 
     const handleLogout = () => {
@@ -167,12 +193,58 @@ const App: React.FC = () => {
     }, []);
   
     const addCustomCoin = useCallback(async (coinData: Omit<CryptoCurrency, 'id' | 'icon' | 'gradient'>) => {
-      // Mock add custom coin
-    }, []);
+      const newCoin: CryptoCurrency = {
+        ...coinData,
+        id: `custom-${coinData.symbol.toLowerCase()}-${Date.now()}`,
+        icon: KeyIcon,
+        gradient: 'from-gray-600 to-gray-800',
+      };
+      
+      setKnownCurrencies(prev => [...prev, newCoin]);
+      
+      if (activeWalletId) {
+        setWallets(prevWallets => {
+          return prevWallets.map(wallet => {
+            if (wallet.id === activeWalletId) {
+              if (wallet.balances[newCoin.symbol]) {
+                return wallet;
+              }
+              return {
+                ...wallet,
+                balances: {
+                  ...wallet.balances,
+                  [newCoin.symbol]: 0,
+                },
+              };
+            }
+            return wallet;
+          });
+        });
+      }
+    }, [activeWalletId]);
     
     const addKnownCoinToWallet = useCallback(async (coinId: string) => {
-      // Mock add known coin
-    }, []);
+      const coinToAdd = knownCurrencies.find(c => c.id === coinId);
+      if (!coinToAdd || !activeWalletId) return;
+
+      setWallets(prevWallets => {
+        return prevWallets.map(wallet => {
+          if (wallet.id === activeWalletId) {
+            if (wallet.balances[coinToAdd.symbol]) {
+              return wallet; // Already exists, do nothing
+            }
+            return {
+              ...wallet,
+              balances: {
+                ...wallet.balances,
+                [coinToAdd.symbol]: 0,
+              },
+            };
+          }
+          return wallet;
+        });
+      });
+    }, [activeWalletId, knownCurrencies]);
   
     const updateApiTier = useCallback(async (providerId: string, tierId: string, updates: Partial<ApiKeyTier>) => {
       // Mock update api tier
@@ -331,8 +403,6 @@ const App: React.FC = () => {
         return <Spinner fullScreen text="Loading NEXUS..." />;
     }
 
-    const profileToView = view === 'profile' ? (selectedProfile || currentUser) : currentUser;
-
     const renderView = () => {
         switch (view) {
             case 'feed': return <FeedView />;
@@ -341,7 +411,15 @@ const App: React.FC = () => {
             case 'asset_store': return <AssetStoreView />;
             case 'wallet': return <WalletView />;
             case 'apikeys': return <ApiKeyManagerView />;
-            case 'profile': return <ProfileView user={profileToView} />;
+            case 'profile': {
+                const userToShow = selectedProfile || currentUser;
+                if (!userToShow) {
+                    // This should not happen when logged in, but acts as a fallback.
+                    setView('feed');
+                    return null;
+                }
+                return <ProfileView user={userToShow} />;
+            }
             case 'mining': return <MiningView />;
             case 'game_detail': return <GameDetailView />;
             case 'live': return <LiveView />;

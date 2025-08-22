@@ -41,9 +41,29 @@ const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
 
     // Mock sign up logic
     setTimeout(() => {
-        // For this demo, signing up will just log you in as the default mock user.
-        console.log("Mock sign up with:", { name, username, email });
-        onAuthSuccess(mockUser);
+        const newUser: User = {
+            id: `u_${username.toLowerCase()}_${Date.now()}`,
+            name: name,
+            username: username,
+            email: email,
+            avatar: `https://picsum.photos/seed/${username}/100/100`,
+            verified: false,
+            coverPhoto: `https://picsum.photos/seed/${username}-bg/1200/400`,
+            following: [],
+            blockedUsers: [],
+            customCss: '',
+            bio: 'Just joined NEXUS!',
+            referralCode: `NEXUS${username.toUpperCase()}`,
+            referralCount: 0,
+            miningBoost: 1.0,
+            isMining: false,
+            referredUsers: [],
+            createdGames: [],
+            playedGames: [],
+            achievements: [],
+            isTwoFactorEnabled: false,
+        };
+        onAuthSuccess(newUser);
         setIsLoading(false);
     }, 1000);
   };
