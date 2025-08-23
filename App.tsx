@@ -437,21 +437,20 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        let timer: NodeJS.Timeout;
         if (miningEndTime && miningEndTime > Date.now()) {
-            timer = setInterval(() => {
+            const timer = setInterval(() => {
                 const newTimeLeft = miningEndTime - Date.now();
                 if (newTimeLeft <= 0) {
                     setMiningState(prev => ({ ...prev, isMining: false, timeLeft: 0 }));
                     addMiningLog("Mining session ended.");
                     setMiningEndTime(null);
-                    clearInterval(timer);
                 } else {
                     setMiningState(prev => ({ ...prev, timeLeft: newTimeLeft }));
                 }
             }, 1000);
+            
+            return () => clearInterval(timer);
         }
-        return () => clearInterval(timer);
     }, [miningEndTime, addMiningLog]);
 
     const startMining = useCallback(() => {

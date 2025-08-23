@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useContext, useEffect, useMemo } from 'react';
 import Card from '../ui/Card';
 import { VerifiedIcon, SettingsIcon, CameraIcon, ImageIcon, GamepadIcon, MoreHorizontalIcon, SlashIcon, FlagIcon } from '../icons/Icons';
@@ -9,7 +10,8 @@ import GameListModal from './GameListModal';
 import AchievementListModal from './AchievementListModal';
 import { AppContext } from '../context/AppContext';
 import { MOCK_ACHIEVEMENTS } from '../../constants';
-import type { User, Game, Achievement } from '../../types';
+import type { User, Game, Achievement, Post } from '../../types';
+import PostCard from '../feed/PostCard';
 
 interface ProfileViewProps {
     user: User;
@@ -77,11 +79,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
 
     if (!context) return null;
 
-    const { currentUser, setCurrentUser, toggleFollow, viewGame, blockUser, unblockUser, games, allUsers } = context;
+    const { currentUser, setCurrentUser, toggleFollow, viewGame, blockUser, unblockUser, games, allUsers, posts } = context;
     
     const createdGames = useMemo(() => {
         return games.filter(g => g.creatorId === user.id);
     }, [games, user.id]);
+
+    const userPosts = useMemo(() => {
+        return posts.filter(post => post.author.id === user.id);
+    }, [posts, user.id]);
 
     const followingUsers = useMemo(() => {
       return user.following.map(id => allUsers.find(u => u.id === id)).filter((u): u is User => !!u);
@@ -299,6 +305,21 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
                 </button>
               </div>
             </Card>
+
+            <div className="space-y-6">
+              {userPosts.length > 0 ? (
+                userPosts.map(post => (
+                  <PostCard key={post.id} post={post} />
+                ))
+              ) : (
+                <Card>
+                  <div className="text-center py-10 text-[var(--text-secondary)]">
+                    <p className="text-lg font-semibold">No posts yet</p>
+                    <p className="mt-1">{user.name} hasn't posted anything.</p>
+                  </div>
+                </Card>
+              )}
+            </div>
 
             {createdGames.length > 0 && (
               <Card>
