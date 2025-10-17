@@ -1,11 +1,16 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
 import { MicIcon, MicOffIcon, VideoIcon, VideoOffIcon, PhoneOffIcon } from '../icons/Icons';
-import type { User } from '../../types';
+import type { User, Conversation } from '../../types';
 
-const VideoCallView: React.FC = () => {
+interface VideoCallViewProps {
+    conversation: Conversation;
+    onEndCall: () => void;
+}
+
+const VideoCallView: React.FC<VideoCallViewProps> = ({ conversation, onEndCall }) => {
     const context = useContext(AppContext);
-    const { selectedConversation, currentUser, setView } = context || {};
+    const { currentUser } = context || {};
 
     const [isMicMuted, setMicMuted] = useState(false);
     const [isCameraOff, setCameraOff] = useState(false);
@@ -17,7 +22,7 @@ const VideoCallView: React.FC = () => {
     const peerConnection1 = useRef<RTCPeerConnection | null>(null);
     const peerConnection2 = useRef<RTCPeerConnection | null>(null);
 
-    const otherParticipant = selectedConversation?.participants.find(p => p.id !== currentUser?.id) as User;
+    const otherParticipant = conversation.participants.find(p => p.id !== currentUser?.id);
 
     useEffect(() => {
         const startCall = async () => {
@@ -60,7 +65,7 @@ const VideoCallView: React.FC = () => {
             } catch (err) {
                 console.error("Error starting call:", err);
                 alert("Could not start video call. Please check permissions.");
-                setView?.('messages');
+                onEndCall();
             }
         };
 
@@ -71,8 +76,10 @@ const VideoCallView: React.FC = () => {
             localStreamRef.current?.getTracks().forEach(track => track.stop());
             peerConnection1.current?.close();
             peerConnection2.current?.close();
+            peerConnection1.current = null;
+            peerConnection2.current = null;
         };
-    }, [setView]);
+    }, [conversation, onEndCall]);
 
     const handleToggleMic = () => {
         if (localStreamRef.current) {
@@ -89,22 +96,19 @@ const VideoCallView: React.FC = () => {
     };
     
     const handleEndCall = () => {
-        localStreamRef.current?.getTracks().forEach(track => track.stop());
-        peerConnection1.current?.close();
-        peerConnection2.current?.close();
-        setView?.('messages');
+        onEndCall();
     };
 
     if (!otherParticipant) {
-        // Handle case where user lands here directly
+        // Handle case where conversation is invalid
         useEffect(() => {
-            setView?.('feed');
-        }, [setView]);
+            onEndCall();
+        }, [onEndCall]);
         return null;
     }
 
     return (
-        <div className="fixed inset-0 bg-black z-50 flex flex-col">
+        <div className="fixed inset-0 bg-black z-50 flex flex-col animate-fade-in">
             {/* Remote Video */}
             <div className="flex-1 relative bg-[var(--bg-secondary)] flex items-center justify-center">
                 <video ref={remoteVideoRef} autoPlay playsInline className="h-full w-full object-cover" />

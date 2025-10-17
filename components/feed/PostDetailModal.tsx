@@ -1,3 +1,4 @@
+
 import React, { useState, useContext, useRef } from 'react';
 import type { Post, Comment, User } from '../../types';
 import Modal from '../ui/Modal';
@@ -6,6 +7,61 @@ import Card from '../ui/Card';
 import { AppContext } from '../context/AppContext';
 import TipModal from './TipModal';
 import { CRYPTO_CURRENCIES } from '../../constants';
+
+const ParsedContent: React.FC<{ content: string }> = ({ content }) => {
+    const context = useContext(AppContext);
+    if (!context) return <>{content}</>;
+
+    const { allUsers, viewProfile, setView, setSearchQuery, viewPost } = context;
+
+    const regex = /(@\w+|#\w+)/g;
+    const parts = content.split(regex);
+
+    return (
+        <>
+            {parts.map((part, index) => {
+                if (part.startsWith('@')) {
+                    const username = part.substring(1);
+                    const user = allUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+                    if (user) {
+                        return (
+                            <button
+                                key={index}
+                                className="text-[var(--accent-primary)] hover:underline font-semibold"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    // Assuming viewPost(null) closes the current modal
+                                    viewPost(null);
+                                    setTimeout(() => viewProfile(user), 50);
+                                }}
+                            >
+                                {part}
+                            </button>
+                        );
+                    }
+                } else if (part.startsWith('#')) {
+                    return (
+                        <button
+                            key={index}
+                            className="text-[var(--accent-primary)] hover:underline font-semibold"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                // Assuming viewPost(null) closes the current modal
+                                viewPost(null);
+                                setSearchQuery(part);
+                                setView('feed');
+                            }}
+                        >
+                            {part}
+                        </button>
+                    );
+                }
+                return <React.Fragment key={index}>{part}</React.Fragment>;
+            })}
+        </>
+    );
+};
+
 
 interface CommentItemProps {
   comment: Comment;
@@ -54,7 +110,9 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, onProfileClick, onRe
           {comment.user.verified && <VerifiedIcon className="w-4 h-4" />}
           <span className="text-xs text-[var(--text-secondary)]">· {comment.timestamp}</span>
         </div>
-        <p className="text-sm text-[var(--text-primary)] mt-1 whitespace-pre-wrap">{comment.content}</p>
+        <div className="text-sm text-[var(--text-primary)] mt-1 whitespace-pre-wrap">
+            <ParsedContent content={comment.content} />
+        </div>
         <div className="flex items-center gap-x-4 gap-y-1 mt-2 text-xs text-[var(--text-secondary)] flex-wrap">
           <button onClick={handleLike} className={`flex items-center gap-1 hover:text-pink-500 transition-colors ${isLiked ? 'text-pink-500' : ''}`}>
             <HeartIcon filled={isLiked} className="w-4 h-4" /> {comment.likes}
@@ -167,7 +225,9 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post
                 <span className="text-sm text-[var(--text-secondary)]">{post.timestamp}</span>
               </div>
             </div>
-            <p className="mt-4 text-[var(--text-primary)] text-lg whitespace-pre-wrap">{post.content}</p>
+            <div className="mt-4 text-[var(--text-primary)] text-lg whitespace-pre-wrap">
+              <ParsedContent content={post.content} />
+            </div>
             {post.image && (
               <img src={post.image} alt="Post content" className="mt-4 rounded-lg w-full object-cover" />
             )}

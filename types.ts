@@ -1,5 +1,3 @@
-
-
 import type React from 'react';
 
 export interface User {
@@ -197,7 +195,7 @@ export interface ApiProvider {
   tiers: ApiKeyTier[];
 }
 
-export type View = 'feed' | 'gaming' | 'studio' | 'wallet' | 'apikeys' | 'profile' | 'mining' | 'game_detail' | 'live' | 'stream_detail' | 'messages' | 'video_call' | 'asset_store';
+export type View = 'feed' | 'gaming' | 'studio' | 'wallet' | 'apikeys' | 'profile' | 'mining' | 'game_detail' | 'live' | 'stream_detail' | 'messages' | 'asset_store';
 
 export interface LiveStream {
   id: string;
@@ -276,6 +274,48 @@ export interface GameEngineIntegration {
     status: 'connected' | 'disconnected';
 }
 
+export interface EditorAsset {
+  id: string;
+  name: string;
+  type: 'character' | 'item' | 'enemy' | 'scenery';
+  icon: (props: { className?: string }) => React.ReactNode;
+  width: number;
+  height: number;
+}
+
+export interface LogicAction {
+  id: string;
+  type: string;
+  params: { [key: string]: any };
+}
+
+export interface LogicTrigger {
+  id: string;
+  type: string;
+  params: { [key: string]: any };
+}
+
+export interface LogicRule {
+  id: string;
+  trigger: LogicTrigger;
+  actions: LogicAction[];
+}
+
+export interface EditorGameObject {
+  id: string;
+  assetId: string;
+  x: number;
+  y: number;
+  logic?: LogicRule[];
+}
+
+export interface AIInsight {
+  id: string;
+  type: 'warning' | 'suggestion' | 'praise';
+  title: string;
+  description: string;
+  relatedObjectIds?: string[];
+}
 
 export interface AppContextType {
   theme: Theme;
@@ -368,4 +408,8 @@ export interface AppContextType {
     content: string, 
     attachment?: { type: 'image'; url: string } | { type: 'game'; gameId: string }
   ) => void;
+
+  activeCall: Conversation | null;
+  startCall: (conversation: Conversation) => void;
+  endCall: () => void;
 }

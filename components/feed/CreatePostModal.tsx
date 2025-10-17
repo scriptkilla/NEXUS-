@@ -1,10 +1,14 @@
+
+
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { CRYPTO_CURRENCIES, MOCK_GAMES } from '../../constants';
 import type { Post, Game, TipGoal, User, EngagementRewards, CreatePostData } from '../../types';
 import Modal from '../ui/Modal';
 import Card from '../ui/Card';
-import { ImageIcon, GamepadIcon, BarChartIcon, DollarSignIcon, XIcon, SparklesIcon } from '../icons/Icons';
+import { ImageIcon, GamepadIcon, BarChartIcon, DollarSignIcon, XIcon, SparklesIcon, LightbulbIcon } from '../icons/Icons';
 import { AppContext } from '../context/AppContext';
+// FIX: Added import for GoogleGenAI
+import { GoogleGenAI } from "@google/genai";
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -46,6 +50,10 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) =>
   const [showMonetizeCreator, setShowMonetizeCreator] = useState(false);
   const [monetizeInput, setMonetizeInput] = useState({ budget: '', perLike: '0.001', perComment: '0.01', perRepost: '0.05' });
 
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showAIPrompt, setShowAIPrompt] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+
   const resetAllState = () => {
     setPostContent('');
     setAttachedImage(null);
@@ -58,6 +66,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) =>
     setEngagementRewards(null);
     setShowMonetizeCreator(false);
     setMonetizeInput({ budget: '', perLike: '0.001', perComment: '0.01', perRepost: '0.05' });
+    setShowAIPrompt(false);
+    setAiPrompt('');
+    setIsGenerating(false);
     if (imageInputRef.current) imageInputRef.current.value = "";
   };
   
@@ -136,6 +147,31 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) =>
     setShowMonetizeCreator(false);
   }
 
+  const handleGeneratePost = async () => {
+    if (!aiPrompt.trim()) return;
+    setIsGenerating(true);
+    
+    try {
+      // FIX: Implemented Gemini API call, replacing mocked implementation.
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: `Generate a creative, engaging, and concise social media post for a platform called NEXUS about: "${aiPrompt}". Include relevant hashtags.`,
+      });
+      const generatedText = response.text;
+      
+      setPostContent(generatedText);
+      setShowAIPrompt(false);
+      setAiPrompt('');
+
+    } catch (error) {
+      console.error("AI content generation failed:", error);
+      alert('Failed to generate content. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handlePost = () => {
     const isPollValid = showPollCreator && pollOptions.filter(opt => opt.trim() !== '').length >= 2;
     if (!postContent.trim() && !attachedImage && !isPollValid && !attachedGame) return;
@@ -212,6 +248,20 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) =>
               </div>
             </div>
           )}
+          {showAIPrompt && (
+            <div className="mt-4 p-3 bg-[var(--bg-secondary)] rounded-lg animate-fade-in space-y-3">
+              <h4 className="text-sm font-semibold">Generate with AI</h4>
+              <div className="flex items-center gap-2">
+                  <input type="text" value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder="e.g., A hot take on the future of Web3 gaming" className="w-full bg-[var(--bg-glass)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[var(--accent-primary)] focus:outline-none"/>
+              </div>
+              <div className="flex justify-end gap-2">
+                  <button onClick={() => setShowAIPrompt(false)} className="px-3 py-1 text-xs font-semibold text-[var(--text-secondary)] hover:text-white">Cancel</button>
+                  <button onClick={handleGeneratePost} disabled={isGenerating || !aiPrompt.trim()} className="px-3 py-1 text-xs font-semibold text-white bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-full disabled:opacity-50">
+                    {isGenerating ? 'Generating...' : 'Generate'}
+                  </button>
+              </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex justify-between items-center mt-4"><div className="flex items-center gap-5 text-[var(--text-secondary)]">
@@ -220,6 +270,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) =>
             <button onClick={() => setGameModalOpen(true)} className={`hover:text-[var(--accent-primary)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${attachedGame ? 'text-[var(--accent-primary)]' : ''}`} title="Add Game" disabled={hasAttachment && !attachedGame}><GamepadIcon className="w-6 h-6" /></button>
             <button onClick={togglePollCreator} className={`hover:text-[var(--accent-primary)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${showPollCreator ? 'text-[var(--accent-primary)]' : ''}`} title="Create Poll" disabled={hasAttachment && !showPollCreator}><BarChartIcon className="w-6 h-6" /></button>
             <button onClick={() => setShowTipGoalCreator(p => !p)} className={`hover:text-[var(--accent-primary)] transition-colors ${tipGoal || showTipGoalCreator ? 'text-[var(--accent-primary)]' : ''}`} title="Set Tip Goal"><DollarSignIcon className="w-6 h-6" /></button>
+            <button onClick={() => setShowAIPrompt(p => !p)} className={`hover:text-[var(--accent-primary)] transition-colors ${showAIPrompt ? 'text-[var(--accent-primary)]' : ''}`} title="Generate with AI"><LightbulbIcon className="w-6 h-6" /></button>
             <button onClick={() => setShowMonetizeCreator(p => !p)} className={`hover:text-[var(--accent-primary)] transition-colors ${engagementRewards || showMonetizeCreator ? 'text-[var(--accent-primary)]' : ''}`} title="Monetize Post"><SparklesIcon className="w-6 h-6" /></button>
           </div><button onClick={handlePost} disabled={!canPost} className="px-6 py-2 font-semibold text-white bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">Post</button></div>
         </Card>

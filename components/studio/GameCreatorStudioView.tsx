@@ -1,348 +1,187 @@
-
-
-import React, { useState, useContext } from 'react';
-import Card from '../ui/Card';
-import { GAME_SIZES, GAME_DIFFICULTIES, GAME_GENRES, AI_OPTIONS, GAME_SIZE_COSTS } from '../../constants';
-import { SparklesIcon, GamepadIcon, LightbulbIcon, WrenchIcon, PackageIcon } from '../icons/Icons';
-import { type ClickerGameConfig, GameSize, GameDifficulty, AppContextType } from '../../types';
+// FIX: Created missing file components/studio/GameCreatorStudioView.tsx
+import React, { useState, useContext, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
+import Card from '../ui/Card';
 import ClickerGame from './ClickerGame';
-
-const SelectInput: React.FC<{ label: string; options: readonly string[]; value: string; onChange: (val: string) => void }> = ({ label, options, value, onChange }) => (
-  <div>
-    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">{label}</label>
-    <select value={value} onChange={e => onChange(e.target.value)} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-3 focus:ring-2 focus:ring-[var(--accent-primary)] focus:outline-none transition-all">
-      {options.map(opt => <option key={opt}>{opt}</option>)}
-    </select>
-  </div>
-);
-
-const LoadingState: React.FC = () => (
-  <Card className="animate-pulse">
-      <div className="h-8 bg-[var(--bg-secondary)] rounded w-3/4 mb-6"></div>
-      <div className="space-y-4">
-        <div className="h-4 bg-[var(--bg-secondary)] rounded w-full"></div>
-        <div className="h-4 bg-[var(--bg-secondary)] rounded w-5/6"></div>
-        <div className="h-4 bg-[var(--bg-secondary)] rounded w-full"></div>
-        <div className="h-4 bg-[var(--bg-secondary)] rounded w-4/6"></div>
-        <div className="h-4 bg-[var(--bg-secondary)] rounded w-full mt-4"></div>
-        <div className="h-4 bg-[var(--bg-secondary)] rounded w-3/4"></div>
-      </div>
-    </Card>
-);
-
+import { type ClickerGameConfig, type Game, type ClickerUpgrade } from '../../types';
+import { SparklesIcon, SaveIcon, PlusIcon, Trash2Icon, LightbulbIcon, SettingsIcon, WrenchIcon } from '../icons/Icons';
+import { GoogleGenAI } from '@google/genai';
 
 export const GameCreatorStudioView: React.FC = () => {
-  const context = useContext(AppContext);
-  const [gameTitle, setGameTitle] = useState('');
-  const [gameDescriptionPrompt, setGameDescriptionPrompt] = useState('');
-  const [gameGenre, setGameGenre] = useState(GAME_GENRES[0]);
-  const [gameSize, setGameSize] = useState<GameSize>(GAME_SIZES[0] as GameSize);
-  const [gameDifficulty, setGameDifficulty] = useState<GameDifficulty>(GAME_DIFFICULTIES[0] as GameDifficulty);
-  const [selectedAIs, setSelectedAIs] = useState<{ [key: string]: { model: string; version?: string; } }>({});
+    const context = useContext(AppContext);
+    const [activeTab, setActiveTab] = useState<'settings' | 'logic' | 'ai'>('settings');
+    const [isGenerating, setIsGenerating] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [generatedGameConfig, setGeneratedGameConfig] = useState<ClickerGameConfig | null>(null);
-  const [error, setError] = useState('');
-
-  if (!context) return null;
-  const { setView } = context;
-
-  const handleModelChange = (category: string, modelName: string) => {
-    const group = AI_OPTIONS.find(g => g.title === category);
-    const model = group?.models.find(m => m.name === modelName);
-    
-    setSelectedAIs(prev => ({
-      ...prev,
-      [category]: {
-        model: modelName,
-        version: model?.versions?.[0], // Select first version by default
-      }
-    }));
-  };
-
-  const handleVersionChange = (category: string, versionName: string) => {
-    setSelectedAIs(prev => {
-        const currentSelection = prev[category];
-        if (!currentSelection) return prev; // Should not happen
-        return {
-            ...prev,
-            [category]: {
-                ...currentSelection,
-                version: versionName,
-            }
-        };
+    const [gameDetails, setGameDetails] = useState({
+        title: 'My Awesome Clicker',
+        description: 'A super fun clicker game made with NEXUS AI Studio!',
+        category: 'p2e' as 'p2e' | 'p2p',
+        thumbnail: `https://picsum.photos/seed/${Date.now()}/500/300`
     });
-  };
 
-  const handlePublishGame = () => {
-    if (!generatedGameConfig) return;
-    
-    const cost = GAME_SIZE_COSTS[gameSize];
-    if (context.nxgBalance < cost) {
-      setError(`Insufficient NXG balance. You need ${cost} NXG to publish a game of this size, but you only have ${context.nxgBalance.toFixed(2)} NXG.`);
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-      return;
-    }
-
-    context.sendCrypto('NXG', cost);
-
-    const p2pGenres = ["First-Person Shooter (FPS)", "Real-Time Strategy (RTS)", "Turn-Based Strategy", "Fighting", "Sports", "Battle Royale", "MMORPG"];
-    const category: 'p2e' | 'p2p' = p2pGenres.includes(gameGenre) ? 'p2p' : 'p2e';
-
-    context.publishGame({
-        title: generatedGameConfig.title,
-        description: generatedGameConfig.description,
-        category,
-        thumbnail: `https://picsum.photos/seed/${generatedGameConfig.title.replace(/\s+/g, '-').toLowerCase()}/500/300`,
+    const [clickerConfig, setClickerConfig] = useState<ClickerGameConfig>({
+        title: 'My Awesome Clicker',
+        description: 'A super fun clicker game made with NEXUS AI Studio!',
+        itemName: 'Coin',
+        itemEmoji: '🪙',
+        pointsPerClick: 1,
+        upgrades: [
+            { name: 'Auto-Clicker', cost: 10, pointsPerSecond: 1 },
+            { name: 'Better Mouse', cost: 100, pointsPerSecond: 5 },
+            { name: 'Super Clicks', cost: 500, pointsPerSecond: 25 },
+        ]
     });
-  };
 
-  const handleGenerateGame = async () => {
-    setIsLoading(true);
-    setError('');
-    setGeneratedGameConfig(null);
-
-    // Mock function to generate a config based on user input
-    const mockGenerate = (): ClickerGameConfig => {
-        const title = gameTitle || 'Untitled Adventure';
-        const item = gameGenre.toLowerCase().includes('space') || gameGenre.toLowerCase().includes('cyberpunk') ? 'Credits' : 
-                     gameGenre.toLowerCase().includes('rpg') ? 'Gold' :
-                     gameGenre.toLowerCase().includes('shooter') ? 'Ammo' : 'Points';
-        const emoji = gameGenre.toLowerCase().includes('space') || gameGenre.toLowerCase().includes('cyberpunk') ? '💰' : 
-                      gameGenre.toLowerCase().includes('rpg') ? '✨' :
-                      gameGenre.toLowerCase().includes('shooter') ? '💥' : '💎';
-
-        return {
-            title: `Clicker: ${title}`,
-            description: `A clicker game based on the idea: "${gameDescriptionPrompt || 'A grand adventure!'}"`,
-            itemName: item,
-            itemEmoji: emoji,
-            pointsPerClick: 1,
-            upgrades: [
-                { name: `Basic ${item} Collector`, cost: 20, pointsPerSecond: 1 },
-                { name: `Automated ${item} Farm`, cost: 150, pointsPerSecond: 8 },
-                { name: `Advanced ${item} Factory`, cost: 1000, pointsPerSecond: 45 },
-                { name: `Galactic ${item} Empire`, cost: 8000, pointsPerSecond: 250 },
-            ]
-        };
+    const handleDetailChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setGameDetails(prev => ({ ...prev, [name]: value }));
+        if (name === 'title' || name === 'description') {
+            setClickerConfig(prev => ({ ...prev, [name]: value }));
+        }
     };
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setClickerConfig(prev => ({ ...prev, [name]: name === 'pointsPerClick' ? Number(value) : value }));
+    };
+
+    const handleUpgradeChange = (index: number, field: keyof ClickerUpgrade, value: string) => {
+        const newUpgrades = [...clickerConfig.upgrades];
+        const numValue = Number(value);
+        if (!isNaN(numValue)) {
+            (newUpgrades[index] as any)[field] = field === 'name' ? value : numValue;
+            setClickerConfig(prev => ({ ...prev, upgrades: newUpgrades }));
+        } else if (field === 'name') {
+             (newUpgrades[index] as any)[field] = value;
+            setClickerConfig(prev => ({ ...prev, upgrades: newUpgrades }));
+        }
+    };
+
+    const addUpgrade = () => {
+        setClickerConfig(prev => ({
+            ...prev,
+            upgrades: [...prev.upgrades, { name: 'New Upgrade', cost: 1000, pointsPerSecond: 50 }]
+        }));
+    };
+
+    const removeUpgrade = (index: number) => {
+        setClickerConfig(prev => ({
+            ...prev,
+            upgrades: prev.upgrades.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handlePublish = () => {
+        if (!context) return;
+        context.publishGame({
+            ...gameDetails
+        });
+    };
+
+    const handleGenerateIdeas = async () => {
+        setIsGenerating(true);
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const prompt = `Generate 3 creative and balanced upgrade ideas for a clicker game about collecting "${clickerConfig.itemName}". Provide a unique "name", a "cost" (number), and "pointsPerSecond" (number). Format the response as a valid JSON array of objects, like this: [{"name": "...", "cost": ..., "pointsPerSecond": ...}]`;
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: { responseMimeType: "application/json" }
+            });
+
+            const ideasText = response.text.trim();
+            const ideas = JSON.parse(ideasText) as ClickerUpgrade[];
+            
+            if (Array.isArray(ideas) && ideas.every(i => i.name && typeof i.cost === 'number' && typeof i.pointsPerSecond === 'number')) {
+                 setClickerConfig(prev => ({ ...prev, upgrades: [...prev.upgrades, ...ideas] }));
+            } else {
+                throw new Error("Invalid JSON format from AI");
+            }
+        } catch (error) {
+            console.error("AI content generation failed:", error);
+            alert('Failed to generate upgrade ideas. The AI might be busy or the response was not in the correct format. Please try again.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
     
-    try {
-      const config = mockGenerate();
-      setGeneratedGameConfig(config);
-    } catch (err) {
-      console.error('Mock game generation failed:', err);
-      setError('An unexpected error occurred during mock game generation.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-8 animate-fade-in">
-      <div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] text-transparent bg-clip-text">
-          AI Game Creator Studio
-        </h1>
-        <p className="text-[var(--text-secondary)] mt-2">Bring your game ideas to life with the power of generative AI.</p>
-      </div>
-
-      <div className="flex border-b border-[var(--border-color)]">
-        <button
-          className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]`}
-        >
-          <WrenchIcon className="w-5 h-5"/>
-          Blueprint
-        </button>
-        <button
-          onClick={() => setView('asset_store')}
-          className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors text-[var(--text-secondary)] hover:text-white`}
-        >
-          <PackageIcon className="w-5 h-5"/>
-          Asset Store
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <Card>
-            <h2 className="text-2xl font-bold mb-4">Game Blueprint</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Game Title</label>
-                <input type="text" value={gameTitle} onChange={e => setGameTitle(e.target.value)} placeholder="e.g., Cyberpunk Samurai Quest" className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-3 focus:ring-2 focus:ring-[var(--accent-primary)] focus:outline-none transition-all" />
-              </div>
-              <SelectInput label="Game Genre" options={GAME_GENRES} value={gameGenre} onChange={setGameGenre} />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Game Size (Cost to Publish)</label>
-                  <select value={gameSize} onChange={e => setGameSize(e.target.value as GameSize)} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-3 focus:ring-2 focus:ring-[var(--accent-primary)] focus:outline-none transition-all">
-                    {Object.values(GameSize).map(size => (
-                      <option key={size} value={size}>{`${size} - ${GAME_SIZE_COSTS[size]} NXG`}</option>
-                    ))}
-                  </select>
-                </div>
-                <SelectInput label="Difficulty Level" options={GAME_DIFFICULTIES} value={gameDifficulty} onChange={(val) => setGameDifficulty(val as GameDifficulty)} />
-              </div>
+    return (
+        <div className="space-y-8 animate-fade-in">
+            <div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] text-transparent bg-clip-text">
+                    AI Game Creator Studio
+                </h1>
+                <p className="text-[var(--text-secondary)] mt-2">Design, build, and publish your own games directly on the NEXUS platform.</p>
             </div>
-          </Card>
-
-          <Card>
-            <h2 className="text-2xl font-bold mb-4">Game Description</h2>
-            <p className="text-[var(--text-secondary)] text-sm mb-4">
-              Describe the game you want to create. Be as detailed as you like. The more information you provide, the better the AI can generate a concept for you. Include ideas about story, characters, art style, unique features, etc.
-            </p>
-            <textarea
-              value={gameDescriptionPrompt}
-              onChange={(e) => setGameDescriptionPrompt(e.target.value)}
-              placeholder="e.g., A post-apocalyptic survival game where players build and defend a settlement on a giant, wandering creature. The art style should be inspired by Studio Ghibli, but with a darker, more mature tone..."
-              className="w-full h-40 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-3 focus:ring-2 focus:ring-[var(--accent-primary)] focus:outline-none transition-all resize-y"
-            />
-          </Card>
-          
-          <Card>
-            <h2 className="text-2xl font-bold mb-4">AI Model Integration</h2>
-            <p className="text-[var(--text-secondary)] text-sm mb-6">
-                Select the AI models you would hypothetically use to build this game. This choice doesn't affect the mini-game generation but helps frame the creative process.
-            </p>
-            <div className="space-y-6">
-              {AI_OPTIONS.map(group => {
-                const selectedForCategory = selectedAIs[group.title];
-                const selectedModelName = selectedForCategory?.model;
-                const selectedModel = group.models.find(m => m.name === selectedModelName);
-
-                return (
-                  <div key={group.title}>
-                    <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">{group.title}</h3>
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={selectedModelName || ''}
-                        onChange={(e) => handleModelChange(group.title, e.target.value)}
-                        className={`w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-3 focus:ring-2 focus:ring-[var(--accent-primary)] focus:outline-none transition-all ${selectedModel?.versions ? 'w-1/2' : 'w-full'}`}
-                      >
-                        <option value="" disabled>Select a model...</option>
-                        {group.models.map(model => (
-                          <option key={model.name} value={model.name}>{model.name} ({model.provider})</option>
-                        ))}
-                      </select>
-                      
-                      {selectedModel?.versions && (
-                        <select
-                          value={selectedForCategory?.version || ''}
-                          onChange={(e) => handleVersionChange(group.title, e.target.value)}
-                          className="w-1/2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-3 focus:ring-2 focus:ring-[var(--accent-primary)] focus:outline-none transition-all"
-                        >
-                          {selectedModel.versions.map(v => (
-                            <option key={v} value={v}>{v}</option>
-                          ))}
-                        </select>
-                      )}
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Configuration Panel */}
+                <Card>
+                    <div className="flex border-b border-[var(--border-color)] mb-4">
+                        <button onClick={() => setActiveTab('settings')} className={`px-4 py-2 text-sm font-semibold flex items-center gap-2 ${activeTab === 'settings' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}><SettingsIcon className="w-4 h-4" />Settings</button>
+                        <button onClick={() => setActiveTab('logic')} className={`px-4 py-2 text-sm font-semibold flex items-center gap-2 ${activeTab === 'logic' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}><WrenchIcon className="w-4 h-4" />Logic</button>
+                        <button onClick={() => setActiveTab('ai')} className={`px-4 py-2 text-sm font-semibold flex items-center gap-2 ${activeTab === 'ai' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}><LightbulbIcon className="w-4 h-4" />AI Assist</button>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
 
-          <Card>
-            <h2 className="text-2xl font-bold mb-4 flex items-center gap-3">
-              <LightbulbIcon className="w-7 h-7 text-yellow-400"/>
-              How Games Are Made: A Look Under the Hood
-            </h2>
-            <div className="space-y-4 text-[var(--text-secondary)] text-sm leading-relaxed prose prose-invert prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
-                <p>
-                    Game engines are built on top of low-level Application Programming Interfaces (APIs). Sometimes, for extreme performance or custom needs, developers will bypass the engine and use these APIs directly.
-                </p>
+                    {activeTab === 'settings' && (
+                        <div className="space-y-4 animate-fade-in">
+                            <h3 className="text-lg font-bold">Game Details</h3>
+                            <div><label className="text-xs text-[var(--text-secondary)]">Game Title</label><input type="text" name="title" value={gameDetails.title} onChange={handleDetailChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-2" /></div>
+                            <div><label className="text-xs text-[var(--text-secondary)]">Description</label><textarea name="description" value={gameDetails.description} onChange={handleDetailChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-2" rows={3} /></div>
+                            <div><label className="text-xs text-[var(--text-secondary)]">Category</label><select name="category" value={gameDetails.category} onChange={handleDetailChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-2"><option value="p2e">Play-to-Earn (P2E)</option><option value="p2p">Player-vs-Player (P2P)</option></select></div>
+                            <hr className="border-[var(--border-color)]" />
+                            <h3 className="text-lg font-bold">Clicker Settings</h3>
+                            <div><label className="text-xs text-[var(--text-secondary)]">Item Name</label><input type="text" name="itemName" value={clickerConfig.itemName} onChange={handleConfigChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-2" /></div>
+                            <div><label className="text-xs text-[var(--text-secondary)]">Item Emoji</label><input type="text" name="itemEmoji" value={clickerConfig.itemEmoji} onChange={handleConfigChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-2" /></div>
+                            <div><label className="text-xs text-[var(--text-secondary)]">Points Per Click</label><input type="number" name="pointsPerClick" value={clickerConfig.pointsPerClick} onChange={handleConfigChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-2" /></div>
+                        </div>
+                    )}
 
-                <h3 className="text-base font-bold text-white !mt-6 !mb-2">Graphics APIs (The most important low-level API)</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                    <li><strong>Vulkan:</strong> A modern, high-performance, low-overhead API for Windows, Linux, Android. Offers the most control but is very complex.</li>
-                    <li><strong>DirectX 12 (D3D12):</strong> Microsoft's modern, low-level API (the counterpart to Vulkan). Used primarily on Windows and Xbox.</li>
-                    <li><strong>Metal:</strong> Apple's modern, low-level API for macOS and iOS. Similar in philosophy to Vulkan/DX12.</li>
-                    <li><strong>WebGPU:</strong> The emerging modern standard for high-performance graphics on the web, designed to translate to Vulkan, Metal, and D3D12.</li>
-                </ul>
+                    {activeTab === 'logic' && (
+                        <div className="space-y-4 animate-fade-in">
+                            <h3 className="text-lg font-bold">Upgrades</h3>
+                            <div className="space-y-3 max-h-96 overflow-y-auto">
+                                {clickerConfig.upgrades.map((upgrade, index) => (
+                                    <div key={index} className="p-3 bg-[var(--bg-glass)] rounded-lg grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
+                                        <input type="text" value={upgrade.name} onChange={e => handleUpgradeChange(index, 'name', e.target.value)} placeholder="Name" className="md:col-span-3 w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-2" />
+                                        <input type="number" value={upgrade.cost} onChange={e => handleUpgradeChange(index, 'cost', e.target.value)} placeholder="Cost" className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-2" />
+                                        <input type="number" value={upgrade.pointsPerSecond} onChange={e => handleUpgradeChange(index, 'pointsPerSecond', e.target.value)} placeholder="PPS" className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-2" />
+                                        <button onClick={() => removeUpgrade(index)} className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/40"><Trash2Icon className="w-5 h-5 mx-auto" /></button>
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={addUpgrade} className="w-full flex items-center justify-center gap-2 py-2 text-sm font-semibold border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg hover:border-[var(--accent-primary)] hover:text-white transition-colors"><PlusIcon className="w-4 h-4"/> Add Upgrade</button>
+                        </div>
+                    )}
+                    
+                    {activeTab === 'ai' && (
+                        <div className="space-y-4 animate-fade-in">
+                            <h3 className="text-lg font-bold">AI Assistant</h3>
+                            <Card className="!bg-[var(--bg-secondary)]">
+                                <h4 className="font-semibold mb-2">Generate Upgrade Ideas</h4>
+                                <p className="text-sm text-[var(--text-secondary)] mb-3">Let AI create new, balanced upgrades for your game based on your current configuration.</p>
+                                <button onClick={handleGenerateIdeas} disabled={isGenerating} className="w-full flex items-center justify-center gap-2 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-lg hover:opacity-90 disabled:opacity-50">
+                                    <SparklesIcon className="w-4 h-4" />
+                                    {isGenerating ? 'Generating...' : 'Generate with Gemini'}
+                                </button>
+                            </Card>
+                        </div>
+                    )}
+                </Card>
 
-                <h3 className="text-base font-bold text-white !mt-6 !mb-2">How It All Fits Together</h3>
-                <p>Here’s a simplified view of the stack:</p>
-                <pre className="bg-[var(--bg-secondary)] p-4 rounded-lg text-xs font-mono select-all">
-{`+-------------------------------------------------------+
-|        YOUR GAME CODE (C#, GDScript, C++)           |
-+-------------------------------------------------------+
-|      GAME ENGINE API (Unity, Unreal, Godot)         |
-+-------------------------------------------------------+
-|    LOW-LEVEL APIS (Vulkan, DirectX, Metal, etc.)    |
-+-------------------------------------------------------+
-|          OPERATING SYSTEM & HARDWARE DRIVERS          |
-+-------------------------------------------------------+`}
-                </pre>
-                <p>
-                    As a game developer using an engine like NEXUS AI Studio, you primarily interact with the top layer. The engine handles the complexity of the low-level APIs for you, allowing you to focus on creativity and game design.
-                </p>
-            </div>
-        </Card>
-
-        </div>
-
-        <div className="lg:col-span-1">
-          <Card className="sticky top-24">
-            <h2 className="text-2xl font-bold mb-4">Generate</h2>
-            <p className="text-[var(--text-secondary)] text-sm mb-6">Once your blueprint is ready, let our AI engine generate a playable mini-game based on your idea.</p>
-            <div className="text-xs text-yellow-400/80 bg-yellow-900/30 p-2 rounded-md mb-4 flex items-start gap-2">
-              <LightbulbIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span>
-                <strong>Note:</strong> The current AI generates a clicker-style mini-game. The theme, items, and upgrades will be creatively adapted from your description.
-              </span>
-            </div>
-            <button 
-              onClick={handleGenerateGame}
-              disabled={isLoading}
-              className="w-full py-3 font-semibold text-white bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-lg hover:opacity-90 transition-opacity shadow-lg hover:shadow-pink-500/30 disabled:opacity-50 disabled:cursor-wait"
-            >
-              {isLoading ? 'Generating...' : 'Generate Playable Mini-Game'}
-            </button>
-          </Card>
-        </div>
-        
-        {(isLoading || error || generatedGameConfig) && (
-          <div className="lg:col-span-3">
-            {isLoading && <LoadingState />}
-            {error && (
-               <Card className="border-red-500/50">
-                <h2 className="text-xl font-bold text-red-400">Action Failed</h2>
-                <p className="text-[var(--text-secondary)] mt-2">{error}</p>
-              </Card>
-            )}
-            {generatedGameConfig && (
-              <Card>
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
-                      <SparklesIcon className="text-[var(--accent-primary)]" />
-                      Generated Game Preview
-                  </h2>
-                  <button onClick={() => setGeneratedGameConfig(null)} className="text-sm font-semibold text-[var(--text-secondary)] hover:text-white transition-colors">Clear</button>
-                </div>
-                
-                <ClickerGame config={generatedGameConfig} />
-
-                 <div className="mt-6 flex justify-end">
-                    <button
-                        onClick={handlePublishGame}
-                        className="flex items-center gap-2 py-2 px-5 font-semibold text-white bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-lg hover:opacity-90 transition-opacity shadow-lg hover:shadow-pink-500/30"
+                {/* Preview Panel */}
+                <div className="space-y-4">
+                    <ClickerGame config={clickerConfig} />
+                    <button 
+                        onClick={handlePublish}
+                        className="w-full py-3 font-semibold text-lg text-white bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-lg hover:shadow-emerald-500/40 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3"
                     >
-                        <GamepadIcon className="w-5 h-5" />
-                        Publish this Game
+                        <SaveIcon className="w-6 h-6"/>
+                        Publish Game
                     </button>
                 </div>
-              </Card>
-            )}
-          </div>
-        )}
-
-      </div>
-    </div>
-  );
+            </div>
+        </div>
+    )
 };

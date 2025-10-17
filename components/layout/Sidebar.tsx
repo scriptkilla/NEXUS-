@@ -41,8 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setView }) => {
               ${
                 (activeView === link.view && link.view !== 'profile') ||
                 (activeView === 'profile' && link.view === 'profile' && !context?.selectedProfile) ||
-                (activeView === 'stream_detail' && link.view === 'live') ||
-                (activeView === 'video_call' && link.view === 'messages')
+                (activeView === 'stream_detail' && link.view === 'live')
                   ? 'bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] text-white md:shadow-lg'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}

@@ -306,7 +306,8 @@ export const AI_OPTIONS: { title: string; models: AIModel[] }[] = [
     title: "Game Design AI",
     models: [
       { name: "NEXUS AI (Native)", provider: "NEXUS", versions: ["v1.0", "v1.2 (Beta)"] },
-      { name: "Gemini", provider: "Google", versions: ["1.5 Pro", "1.5 Flash", "2.5 Flash Preview"] },
+// FIX: Updated Gemini model to align with guidelines.
+      { name: "Gemini", provider: "Google", versions: ["gemini-2.5-flash"] },
       { name: "GPT-4", provider: "OpenAI", versions: ["Turbo", "Omni", "o-mini"] },
       { name: "Claude 3", provider: "Anthropic", versions: ["Opus", "Sonnet", "Haiku"] },
       { name: "PaLM 2", provider: "Google" },
@@ -409,8 +410,8 @@ export const TEXT_MODELS: LlmService[] = [
     { id: 'oai-gpt4t', company: 'OpenAI', icon: OpenAIIcon, modelName: 'GPT-4 Turbo', description: 'Previous high-intelligence model', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
     { id: 'anth-claude3o', company: 'Anthropic', icon: ClaudeIcon, modelName: 'Claude 3 Opus', description: 'Most powerful model for complex tasks', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
     { id: 'anth-claude3s', company: 'Anthropic', icon: ClaudeIcon, modelName: 'Claude 3 Sonnet', description: 'Balanced model for speed and skill', docsUrl: '#', actionType: 'Add Key', status: 'connected', apiKey: 'mock_claude_sonnet_key' },
-    { id: 'goog-gem15p', company: 'Google', icon: GeminiIcon, modelName: 'Gemini 1.5 Pro', description: 'Advanced reasoning across modalities', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
-    { id: 'goog-gem10f', company: 'Google', icon: GeminiIcon, modelName: 'Gemini 1.0 Flash', description: 'Fast and efficient for scale', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
+// FIX: Replaced deprecated Gemini models with the recommended 'gemini-2.5-flash'.
+    { id: 'goog-gem25f', company: 'Google', icon: GeminiIcon, modelName: 'Gemini 2.5 Flash', description: 'Fast, efficient, and versatile.', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
     { id: 'meta-llama3', company: 'Meta', icon: MetaIcon, modelName: 'Llama 3 (70B)', description: 'Powerful open-weight model', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
     { id: 'mist-large', company: 'Mistral AI', icon: MistralIcon, modelName: 'Mistral Large', description: 'Strong multilingual capabilities', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },
     { id: 'coh-commandr', company: 'Cohere', icon: CohereIcon, modelName: 'Command R+', description: 'Optimized for enterprise workflows', docsUrl: '#', actionType: 'Add Key', status: 'disconnected' },

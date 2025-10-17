@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import type { View, Theme, Post, NotificationSettings, PrivacySettings, User, ApiProvider, ApiKeyTier, Wallet, Network, CryptoCurrency, Game, LiveStream, CreatePostData, Conversation, MiningState, LlmService, GameEngineIntegration, DirectMessage } from './types';
 import { THEMES, TEXT_MODELS, IMAGE_VIDEO_MODELS, VOICE_AUDIO_MODELS, GAME_ENGINE_INTEGRATIONS, MOCK_GAMES, MOCK_LIVE_STREAMS, MOCK_CONVERSATIONS, MOCK_WALLETS, CRYPTO_CURRENCIES, MOCK_NETWORKS, API_PROVIDERS, MOCK_USERS, MOCK_POSTS } from './constants';
@@ -53,6 +54,7 @@ const App: React.FC = () => {
     const [selectedStream, setSelectedStream] = useState<LiveStream | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+    const [activeCall, setActiveCall] = useState<Conversation | null>(null);
 
     // New API Key Management State
     const [textModels, setTextModels] = useState<LlmService[]>(TEXT_MODELS);
@@ -81,32 +83,38 @@ const App: React.FC = () => {
     const selectedConversation = useMemo(() => conversations.find(c => c.id === selectedConversationId), [conversations, selectedConversationId]);
 
     const handleAuthSuccess = (user: User) => {
-        const userExists = allUsers.some(u => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase());
+        setCurrentUserState(user);
 
-        if (!userExists) {
-            // New user from sign-up
-            const newUser = { ...user, id: `u${allUsers.length + 1}`};
-            setAllUsers(prevUsers => [...prevUsers, newUser]);
-            
-            const newWallet: Wallet = {
-                id: `w${allUsers.length + 1}`,
-                name: `${user.name}'s Wallet`,
-                userId: newUser.id,
-                address: `NEXUS-addr-${user.username.toLowerCase()}-${Date.now().toString().slice(-4)}`,
-                balances: { 'NXG': 1000 }, // Welcome bonus
-                seedPhrase: `welcome to nexus ${user.username} this is a mock seed phrase for demo`,
-            };
-            
-            setWallets(prevWallets => [...prevWallets, newWallet]);
-            setActiveWalletId(newWallet.id);
-            setCurrentUserState(newUser);
+        // This app still uses mock data for wallets, etc.
+        // We find a wallet by email to bridge the gap for the demo Aurora user.
+        // For new users, we create a new wallet.
+        const mockUserFromEmail = Object.values(MOCK_USERS).find(u => u.email.toLowerCase() === user.email.toLowerCase());
+        const mockWallet = mockUserFromEmail ? MOCK_WALLETS.find(w => w.userId === mockUserFromEmail.id) : undefined;
+
+        if (mockWallet) {
+            setActiveWalletId(mockWallet.id);
         } else {
-             // Existing user from login, find their wallet
-             const userWallet = MOCK_WALLETS.find(w => w.userId === user.id);
-             if (userWallet) {
-                setActiveWalletId(userWallet.id);
-             }
-             setCurrentUserState(user);
+             // New user or a user not in mock data
+            const existingWallet = wallets.find(w => w.userId === user.id);
+            if(existingWallet) {
+                setActiveWalletId(existingWallet.id);
+            } else {
+                const newWallet: Wallet = {
+                    id: `w_${user.id}`,
+                    name: `${user.name}'s Wallet`,
+                    userId: user.id,
+                    address: `NEXUS-addr-${user.username.toLowerCase()}-${Date.now().toString().slice(-4)}`,
+                    balances: { 'NXG': 1000 }, // Welcome bonus
+                    seedPhrase: `welcome to nexus ${user.username} this is a mock seed phrase for demo`,
+                };
+                setWallets(prevWallets => [...prevWallets, newWallet]);
+                setActiveWalletId(newWallet.id);
+            }
+        }
+
+        // Add user to allUsers if not present
+        if (!allUsers.some(u => u.id === user.id)) {
+            setAllUsers(prev => [...prev, user]);
         }
 
         setDataLoaded(true);
@@ -171,7 +179,8 @@ const App: React.FC = () => {
           const budget = postData.engagementRewards.totalBudget;
           setWallets(prev => prev.map(w => {
               if (w.id === activeWalletId) {
-                  return { ...w, balances: { ...w.balances, 'NXG': w.balances['NXG'] - budget } };
+                  // FIX: Correctly update wallet balance by spreading w.balances, not w, and using a string literal for the key. Also added nullish coalescing for safety.
+                  return { ...w, balances: { ...w.balances, 'NXG': (w.balances['NXG'] || 0) - budget } };
               }
               return w;
           }));
@@ -427,6 +436,14 @@ const App: React.FC = () => {
             return c;
         }));
     }, [currentUser]);
+    
+    const startCall = useCallback((conversation: Conversation) => {
+        setActiveCall(conversation);
+    }, []);
+
+    const endCall = useCallback(() => {
+        setActiveCall(null);
+    }, []);
 
     // Mining Logic
     const addMiningLog = useCallback((message: string) => {
@@ -533,6 +550,9 @@ const App: React.FC = () => {
         selectedConversation,
         selectConversation,
         sendMessage,
+        activeCall,
+        startCall,
+        endCall,
         mining: {
             ...miningState,
             startMining,
@@ -545,7 +565,7 @@ const App: React.FC = () => {
         addCustomCoin, addKnownCoinToWallet, notificationSettings, privacySettings, apiProviders, updateApiTier,
         textModels, imageVideoModels, voiceAudioModels, gameEngines, updateLlmService, updateGameEngine,
         games, selectedGame, viewGame, playGame, publishGame, liveStreams, selectedStream, viewStream, goLive,
-        handleLogout, conversations, selectedConversation, selectConversation, sendMessage, addWallet,
+        handleLogout, conversations, selectedConversation, selectConversation, sendMessage, addWallet, activeCall, startCall, endCall,
         miningState, startMining, addMiningLog
     ]);
 
@@ -579,7 +599,6 @@ const App: React.FC = () => {
             case 'live': return <LiveView />;
             case 'stream_detail': return <StreamDetailView />;
             case 'messages': return <MessagesView />;
-            case 'video_call': return <VideoCallView />;
             default: return <FeedView />;
         }
     };
@@ -602,6 +621,7 @@ const App: React.FC = () => {
                 <CreatePostModal isOpen={isCreatePostModalOpen} onClose={() => setCreatePostModalOpen(false)} />
                 <CustomThemeModal isOpen={isCustomThemeEditorOpen} onClose={() => setCustomThemeEditorOpen(false)} />
                 <PostDetailModal isOpen={!!selectedPost} onClose={() => viewPost(null)} post={selectedPost} />
+                {activeCall && <VideoCallView conversation={activeCall} onEndCall={endCall} />}
             </div>
         </AppContext.Provider>
     );

@@ -194,7 +194,7 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, crypto, recipient 
   );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="w-full max-w-md">
+    <Modal isOpen={isOpen} onClose={onClose} className="w-full max-w-sm">
         {isSent ? renderSuccess() : renderForm()}
     </Modal>
   );

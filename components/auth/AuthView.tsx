@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NexusLogoIcon } from '../icons/Icons';
-import { MOCK_USERS } from '../../constants';
+import * as api from '../../api';
 import type { User } from '../../types';
 
 interface AuthViewProps {
@@ -16,22 +16,25 @@ const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const mockUser = MOCK_USERS.aurora;
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
     
-    // Mock login logic
-    setTimeout(() => {
-        if (email.toLowerCase() === mockUser.email.toLowerCase()) {
-            onAuthSuccess(mockUser);
-        } else {
-            setError(`Invalid credentials. For this demo, use the email "${mockUser.email}" and any password.`);
+    try {
+        const user = await api.signIn(email, password);
+        onAuthSuccess(user);
+    } catch (error: any) {
+        let errorMessage = 'Failed to sign in. Please check your credentials.';
+        if (error.code === 'auth/invalid-credential') {
+            errorMessage = 'Invalid email or password.';
+        } else if (error.message) {
+            errorMessage = error.message;
         }
+        setError(errorMessage);
+    } finally {
         setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -39,33 +42,22 @@ const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
     setIsLoading(true);
     setError('');
 
-    // Mock sign up logic
-    setTimeout(() => {
-        const newUser: User = {
-            id: `u_${username.toLowerCase()}_${Date.now()}`,
-            name: name,
-            username: username,
-            email: email,
-            avatar: `https://picsum.photos/seed/${username}/100/100`,
-            verified: false,
-            coverPhoto: `https://picsum.photos/seed/${username}-bg/1200/400`,
-            following: [],
-            blockedUsers: [],
-            customCss: '',
-            bio: 'Just joined NEXUS!',
-            referralCode: `NEXUS${username.toUpperCase()}`,
-            referralCount: 0,
-            miningBoost: 1.0,
-            isMining: false,
-            referredUsers: [],
-            createdGames: [],
-            playedGames: [],
-            achievements: [],
-            isTwoFactorEnabled: false,
-        };
+    try {
+        const newUser = await api.signUp(email, password, name, username);
         onAuthSuccess(newUser);
+    } catch (error: any) {
+        let errorMessage = 'Failed to sign up.';
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = 'This email address is already in use.';
+        } else if (error.code === 'auth/weak-password') {
+            errorMessage = 'Password should be at least 6 characters.';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        setError(errorMessage);
+    } finally {
         setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (

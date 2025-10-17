@@ -1,3 +1,4 @@
+
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import type { Post, CryptoCurrency } from '../../types';
 import Card from '../ui/Card';
@@ -5,6 +6,57 @@ import { AppContext } from '../context/AppContext';
 import { HeartIcon, RepeatIcon, MessageCircleIcon, GiftIcon, MoreHorizontalIcon, VerifiedIcon, SparklesIcon, GamepadIcon, UserPlusIcon, UserCheckIcon, SlashIcon } from '../icons/Icons';
 import TipDropdown from './TipDropdown';
 import TipModal from './TipModal';
+
+const ParsedContent: React.FC<{ content: string }> = ({ content }) => {
+    const context = useContext(AppContext);
+    if (!context) return <>{content}</>;
+
+    const { allUsers, viewProfile, setView, setSearchQuery } = context;
+
+    const regex = /(@\w+|#\w+)/g;
+    const parts = content.split(regex);
+
+    return (
+        <>
+            {parts.map((part, index) => {
+                if (part.startsWith('@')) {
+                    const username = part.substring(1);
+                    const user = allUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+                    if (user) {
+                        return (
+                            <button
+                                key={index}
+                                className="text-[var(--accent-primary)] hover:underline font-semibold"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    viewProfile(user);
+                                }}
+                            >
+                                {part}
+                            </button>
+                        );
+                    }
+                } else if (part.startsWith('#')) {
+                    return (
+                        <button
+                            key={index}
+                            className="text-[var(--accent-primary)] hover:underline font-semibold"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSearchQuery(part);
+                                setView('feed');
+                            }}
+                        >
+                            {part}
+                        </button>
+                    );
+                }
+                return <React.Fragment key={index}>{part}</React.Fragment>;
+            })}
+        </>
+    );
+};
+
 
 interface PostCardProps {
   post: Post;
@@ -183,7 +235,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   )}
               </div>
             </div>
-            <p className="mt-1 text-[var(--text-primary)] whitespace-pre-wrap">{post.content}</p>
+            <div className="mt-1 text-[var(--text-primary)] whitespace-pre-wrap">
+                <ParsedContent content={post.content} />
+            </div>
             
             {/* Attachments */}
             {post.image && <img src={post.image} alt="Post content" className="mt-4 rounded-lg w-full object-cover max-h-96" />}
